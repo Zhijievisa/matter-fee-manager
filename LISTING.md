@@ -22,8 +22,8 @@ Bracketed items are for you to fill in. Nothing here is submitted automatically.
 
 ## Listing
 
-**Icon:** `listing-icon.png` (512 × 512). Check the Listings form for the size and format it currently requires and
-resize if needed.
+**Icon (URL field, 144 × 144 px, HTTPS):** `https://zhijievisa.github.io/matter-fee-manager/listing-icon-144.png`
+(`listing-icon.png` is the same design at 512 × 512.)
 
 **Overview (one line):**
 
