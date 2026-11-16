@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receivables overview</title>
+  <link rel="stylesheet" href="./ui.css">
+</head>
+<body>
+  <div id="mfm-root" class="mfm pad"></div>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <script src="./shared.js"></script>
+  <script src="./overview.js"></script>
+  <script>
+    (function () {
+      var t = MFM.getT();
+      MFM.applyTheme(t);
+      MFM.mountOverview(t, document.getElementById('mfm-root'));
+    })();
+  </script>
+</body>
+</html>
