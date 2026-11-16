@@ -125,19 +125,40 @@ textarea { min-height: 84px; resize: vertical; font-family: inherit; }
 .stage { border-bottom: 1px solid var(--line); padding: 6px 0; }
 .stage.head { padding: 4px 0; font-size: 12px; font-weight: 600; color: var(--muted); }
 .stage .l1 { display: grid; grid-template-columns: 20px minmax(0, 1fr) 108px 156px; gap: 6px; align-items: center; }
-.stage .l2 { display: grid; grid-template-columns: 20px 110px 190px minmax(0, 1fr) auto; gap: 6px; align-items: center; margin-top: 4px; }
+.stage .l2 { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+.stage .l2 .idx { width: 20px; flex: none; }
+.stage .l2 input.inv { width: 104px; flex: none; }
+.stage .l2 .dl { flex: none; }
+.stage .l2 .dl input[type="date"] { width: 132px; }
+.stage .l2 .dl.rv input { width: 84px; }
+.stage .l2 .hint { flex: 1 1 150px; min-width: 0; }
+.stage .l2 .acts { flex: none; margin-left: auto; }
 .stage .idx { color: var(--muted); font-size: 12px; text-align: center; }
 .stage .l2 input { padding: 3px 6px; font-size: 12.5px; }
 .stage .dl { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
-.stage .dl input { flex: 1; }
 .stage .hint { margin-top: 0; overflow: hidden; text-overflow: ellipsis; }
 .stage .acts { white-space: nowrap; }
 .stage.paid input.name, .stage.paid input.amt { color: var(--muted); }
 @media (max-width: 520px) {
   .stage .l1 { grid-template-columns: 20px minmax(0, 1fr) 96px; }
   .stage .l1 select { grid-column: 2 / 4; }
-  .stage .l2 { grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1.4fr); }
-  .stage .l2 .hint { grid-column: 2 / 3; }
-  .stage .l2 .acts { grid-column: 3 / 4; text-align: right; }
 }
 @media (max-width: 520px) { .stage.head .l1 span:nth-child(4) { display: none; } }
+
+/* overview: CSV export and heading row */
+.h2row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.h2row button { margin-bottom: 4px; }
+.csvbox { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin: 6px 0 10px; }
+textarea.csv { min-height: 140px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; margin-top: 6px; }
+/* settings */
+.field.two { display: flex; gap: 16px; flex-wrap: wrap; }
+.small { font-size: 12px; }
+.note .foot { margin-top: 6px; }
+a.link[href] { cursor: pointer; }
+
+.field.two > div > label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+/* static pages (privacy, support) */
+.doc { max-width: 720px; margin: 0 auto; padding: 28px 20px 60px; font-size: 15px; line-height: 1.6; }
+.doc h1 { font-size: 24px; margin: 0 0 4px; } .doc h2 { font-size: 17px; margin: 26px 0 6px; }
+.doc p, .doc li { color: var(--fg); } .doc .muted { font-size: 13px; }
+.doc code { background: var(--panel); padding: 1px 5px; border-radius: 4px; font-size: 13px; }

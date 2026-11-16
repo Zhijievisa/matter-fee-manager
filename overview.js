@@ -1,11 +1,37 @@
 /* Matter Fee Manager — board-level receivables overview (modal opened from the board button) */
 (function () {
   'use strict';
-  var MFM = window.MFM, h = MFM.h;
+  var MFM = window.MFM, h = MFM.h, tr = MFM.tr;
+
+  function csvCell(v) {
+    var s = String(v === undefined || v === null ? '' : v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s;           // stop spreadsheet apps treating text as a formula
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  MFM.toCsv = function (rows) {
+    var lines = [tr('csv_head')];
+    rows.forEach(function (x) {
+      if (!x.fee) return;
+      x.fee.st.forEach(function (s) {
+        var owing = s.s === 3 ? 0 : MFM.owing(s);
+        lines.push([
+          x.card.name, x.list, s.n, MFM.moneyInput(s.a), MFM.moneyInput(s.a - owing), MFM.moneyInput(owing),
+          MFM.statusLabel(s.s), s.inv || '', s.d || '', s.pd || '', s.dd || '', s.bd || ''
+        ].map(csvCell).join(','));
+      });
+    });
+    return lines.join('\n');
+  };
 
   MFM.mountOverview = function (t, root) {
+    var showCsv = false, copied = false, lastRows = [];
+
     function load() {
-      return Promise.all([t.cards('id', 'name', 'idList'), t.lists('id', 'name')]).then(function (r) {
+      return Promise.all([
+        t.cards('id', 'name', 'idList'), t.lists('id', 'name'), t.get('board', 'shared', MFM.CFG_KEY)
+      ]).then(function (r) {
+        MFM.cfg(r[2]);
+        if (!MFM.canSee(t)) { lastRows = []; MFM.fill(root, [h('div', { class: 'note info', text: tr('no_access') })]); return null; }
         var cards = r[0] || [], lists = {};
         (r[1] || []).forEach(function (l) { lists[l.id] = l.name; });
         return Promise.all(cards.map(function (c) {
@@ -15,15 +41,33 @@
             return { card: c, list: lists[c.idList] || '', fee: null };
           });
         }));
-      }).then(draw, function (err) {
-        MFM.fill(root, [h('div', { class: 'note err', text: 'Could not read board data: ' + (err && err.message ? err.message : 'unknown error') })]);
+      }).then(function (rows) { if (rows) { lastRows = rows; draw(rows); } }, function (err) {
+        MFM.fill(root, [h('div', { class: 'note err', text: tr('err_read', err && err.message ? err.message : tr('err_unknown')) })]);
       });
     }
 
     function cardLink(card) {
-      return h('a', { class: 'link', text: card.name, title: 'Open card', onclick: function () {
+      return h('a', { class: 'link', text: card.name, title: tr('open_card'), onclick: function () {
         Promise.resolve(t.showCard(card.id)).then(function () { return t.closeModal(); }, function () { /* ignore */ });
       } });
+    }
+
+    function csvPanel(rows) {
+      var area = h('textarea', { readonly: true, class: 'csv' });
+      area.value = MFM.toCsv(rows);
+      var copyBtn = h('button', { class: 'primary', text: copied ? tr('copied') : tr('copy'), onclick: function () {
+        area.focus(); area.select();
+        var done = function () { copied = true; copyBtn.textContent = tr('copied'); };
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(area.value).then(done, function () { if (document.execCommand('copy')) done(); });
+          else if (document.execCommand('copy')) done();
+        } catch (e) { /* the text stays selected so it can be copied by hand */ }
+      } });
+      return h('div', { class: 'csvbox' }, [
+        h('div', { class: 'muted', text: tr('export_hint') }),
+        area,
+        h('div', { class: 'foot' }, [h('span', { class: 'grow' }), h('button', { text: tr('close'), onclick: function () { showCsv = false; copied = false; draw(lastRows); } }), copyBtn])
+      ]);
     }
 
     function draw(rows) {
@@ -38,6 +82,7 @@
         tot.overdue += x.sum.overdue; tot.outstanding += x.sum.outstanding; tot.paid += x.sum.paid;
         x.fee.st.forEach(function (s) {
           if (s.s !== 1 && s.s !== 2) return;
+          if (MFM.owing(s) <= 0) return;
           var note = MFM.stageNote(s, today);
           // sort: overdue (most days first) > to invoice (longest wait first) > not yet due (soonest first)
           var rank = note.kind === 'late' ? 3e6 + note.days : (s.s === 1 ? 2e6 + note.days : 1e6 + note.days);
@@ -46,41 +91,34 @@
       });
       todo.sort(function (a, b) { return b.rank - a.rank; });
 
+      var tile = function (cls, k, v, sub) {
+        return h('div', { class: 'tile' + cls }, [h('div', { class: 'k', text: k }), h('div', { class: 'v', text: MFM.fmtMoney(v) }), h('div', { class: 'sub', text: sub })]);
+      };
       var tiles = h('div', { class: 'tiles five' }, [
-        h('div', { class: 'tile' + (tot.overdue > 0 ? ' late' : '') }, [
-          h('div', { class: 'k', text: 'Overdue' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.overdue) }),
-          h('div', { class: 'sub', text: 'Past the due date' })]),
-        h('div', { class: 'tile' + (tot.awaiting - tot.overdue > 0 ? ' hot' : '') }, [
-          h('div', { class: 'k', text: 'Invoiced, unpaid' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.awaiting - tot.overdue) }),
-          h('div', { class: 'sub', text: 'Not yet due' })]),
-        h('div', { class: 'tile' + (tot.toInvoice > 0 ? ' hot' : '') }, [
-          h('div', { class: 'k', text: 'Done, to invoice' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.toInvoice) }),
-          h('div', { class: 'sub', text: 'Time to bill' })]),
-        h('div', { class: 'tile' }, [
-          h('div', { class: 'k', text: 'Contract balance' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.outstanding) }),
-          h('div', { class: 'sub', text: 'Incl. stages not started' })]),
-        h('div', { class: 'tile' }, [
-          h('div', { class: 'k', text: 'Total received' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.paid) }),
-          h('div', { class: 'sub', text: withFee.length + ' matter(s) with a schedule' })])
+        tile(tot.overdue > 0 ? ' late' : '', tr('t_over'), tot.overdue, tr('t_over_sub')),
+        tile(tot.awaiting - tot.overdue > 0 ? ' hot' : '', tr('t_inv'), tot.awaiting - tot.overdue, tr('t_inv_sub')),
+        tile(tot.toInvoice > 0 ? ' hot' : '', tr('t_done'), tot.toInvoice, tr('t_done_sub')),
+        tile('', tr('t_bal'), tot.outstanding, tr('t_bal_sub')),
+        tile('', tr('t_recv'), tot.paid, tr('t_recv_sub', withFee.length))
       ]);
 
       var todoTable;
       if (!todo.length) {
-        todoTable = h('div', { class: 'empty', text: 'Nothing to invoice or chase right now.' });
+        todoTable = h('div', { class: 'empty', text: tr('none_todo') });
       } else {
         todoTable = h('table', {}, [
           h('thead', {}, [h('tr', {}, [
-            h('th', { text: 'Matter (card)' }), h('th', { text: 'List' }), h('th', { text: 'Stage' }),
-            h('th', { class: 'num', text: 'Amount' }), h('th', { text: 'Status' }), h('th', { text: 'Invoice no.' }), h('th', { text: 'Timing' })
+            h('th', { text: tr('c_matter') }), h('th', { text: tr('c_list') }), h('th', { text: tr('c_stage') }),
+            h('th', { class: 'num', text: tr('c_amount') }), h('th', { text: tr('c_status') }), h('th', { text: tr('c_inv') }), h('th', { text: tr('c_timing') })
           ])]),
           h('tbody', {}, todo.map(function (it) {
-            var late = it.note.kind === 'late';
+            var late = it.note.kind === 'late', owing = MFM.owing(it.s);
             return h('tr', {}, [
               h('td', {}, [cardLink(it.x.card)]),
               h('td', { class: 'muted', text: it.x.list }),
-              h('td', { text: it.s.n || '(unnamed stage)' }),
-              h('td', { class: 'num', text: MFM.fmtMoney(it.s.a) }),
-              h('td', {}, [h('span', { class: 'pill ' + (late ? 'late' : 's' + it.s.s), text: late ? 'Overdue' : MFM.STATUS[it.s.s].label })]),
+              h('td', { text: it.s.n || tr('unnamed') }),
+              h('td', { class: 'num' }, [MFM.fmtMoney(owing), owing !== it.s.a ? h('div', { class: 'hint', text: tr('of_amount', MFM.fmtMoney(it.s.a, true)) }) : null]),
+              h('td', {}, [h('span', { class: 'pill ' + (late ? 'late' : 's' + it.s.s), text: late ? tr('t_over') : MFM.statusLabel(it.s.s) })]),
               h('td', { class: 'muted', text: it.s.inv || '—' }),
               h('td', { class: 'hint ' + (late ? 'late' : it.s.s === 1 ? 'warn' : ''), text: it.note.text })
             ]);
@@ -90,17 +128,17 @@
 
       withFee.sort(function (a, b) { return (b.sum.receivable - a.sum.receivable) || (b.sum.outstanding - a.sum.outstanding); });
       var allTable = !withFee.length
-        ? h('div', { class: 'empty', text: 'No card on this board has a fee schedule yet. Open a card → click the "Fee schedule" button to create one.' })
+        ? h('div', { class: 'empty', text: tr('none_all') })
         : h('table', {}, [
           h('thead', {}, [h('tr', {}, [
-            h('th', { text: 'Matter (card)' }), h('th', { class: 'num', text: 'Contract total' }), h('th', { class: 'num', text: 'Received' }),
-            h('th', { class: 'num', text: 'Receivable now' }), h('th', { class: 'num', text: 'Not yet due' }), h('th', { text: 'Progress' })
+            h('th', { text: tr('c_matter') }), h('th', { class: 'num', text: tr('c_total') }), h('th', { class: 'num', text: tr('c_received') }),
+            h('th', { class: 'num', text: tr('c_now') }), h('th', { class: 'num', text: tr('c_notdue') }), h('th', { text: tr('c_prog') })
           ])]),
           h('tbody', {}, withFee.map(function (x) {
             var r = x.sum, base = r.sum > 0 ? r.sum : 1;
             var w = function (v) { return 'width:' + (v / base * 100).toFixed(1) + '%'; };
             return h('tr', {}, [
-              h('td', {}, [cardLink(x.card), r.mismatch ? h('div', { class: 'hint warn', text: 'Stages ≠ contract total' }) : null]),
+              h('td', {}, [cardLink(x.card), r.mismatch ? h('div', { class: 'hint warn', text: tr('mismatch_short') }) : null]),
               h('td', { class: 'num', text: MFM.fmtMoney(r.total) }),
               h('td', { class: 'num', text: MFM.fmtMoney(r.paid) }),
               h('td', { class: 'num', text: MFM.fmtMoney(r.receivable), style: r.overdue > 0 ? 'color:var(--red);font-weight:600' : (r.receivable > 0 ? 'color:var(--orange);font-weight:600' : '') }),
@@ -119,13 +157,17 @@
         ]);
 
       MFM.fill(root, [
-        MFM.demo ? h('div', { class: 'demo-banner', text: 'Demo mode: fictional data.' }) : null,
+        MFM.demo ? h('div', { class: 'demo-banner', text: tr('demo_short') }) : null,
         tiles,
-        h('h2', {}, ['Needs follow-up', h('small', { text: todo.length + ' stage(s) · overdue → to invoice → not yet due' })]),
+        h('h2', {}, [tr('h_todo'), h('small', { text: tr('h_todo_sub', todo.length) })]),
         todoTable,
-        h('h2', {}, ['All matters', h('small', { text: 'sorted by amount receivable now' })]),
+        h('div', { class: 'h2row' }, [
+          h('h2', {}, [tr('h_all'), h('small', { text: tr('h_all_sub') })]),
+          withFee.length && !showCsv ? h('button', { text: tr('export'), onclick: function () { showCsv = true; draw(lastRows); } }) : null
+        ]),
+        showCsv ? csvPanel(withFee) : null,
         allTable,
-        h('div', { class: 'note info', text: 'Figures come from each card\'s fee schedule (as at ' + MFM.fmtDate(today) + ', archived cards excluded). Amounts are entered by hand and are not accounting or trust records.' })
+        h('div', { class: 'note info', text: tr('footnote', MFM.fmtDate(today)) })
       ]);
     }
 

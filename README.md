@@ -1,108 +1,74 @@
-# Matter Fee Manager — custom Trello Power-Up
+# Matter Fee Manager
 
-A staged fee schedule for fixed-fee matters. Split a matter into billing stages and move each one through
-**Not started → Done · to invoice → Invoiced · unpaid → Paid**. Card-front badges and a board-level
-receivables overview show who should be paying you now.
+A Trello Power-Up that adds a staged fee schedule to cards, for people who bill fixed-fee work in stages.
 
-Static front-end files only: no server, no database. **Fee data lives only in your Trello cards**
-(Power-Up pluginData). This folder contains code and nothing else.
+Split a job into billing stages and move each one through
+**Not started → Done · to invoice → Invoiced · unpaid → Paid**. Card badges and a board-level receivables
+overview show what to invoice, what is awaiting payment and what is overdue.
+
+Version 1.1.0 · English and 简体中文
+
+## Features
+
+- Fee schedule on the card back: stages, amounts, invoice numbers, due dates, part payments
+- Running summary: contract total, received, receivable now, not yet due, with a cross-check against the contract total
+- Card-front badges: to invoice, unpaid, overdue (with days), paid in full
+- Receivables overview for the whole board, sorted by urgency, with CSV export
+- Stage templates, currency symbol, payment terms and language in board settings
+- Concurrent-edit protection: nothing is overwritten silently when two people edit the same card
+- Fee figures are shown only to board members with edit access
+
+## Data and privacy
+
+Static front-end files only. There is no server and no database. All fee data is stored in Trello Power-Up
+storage on the user's own board (`card/shared/fee` and `board/shared/cfg`). See `privacy.html`.
+
+Trello limits Power-Up storage to 4096 characters per card, which is roughly 20 stages.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `index.html` + `connector.js` | Trello iframe connector: registers badges, buttons and the card-back section |
-| `section.html` + `section.js` | The interactive fee schedule on the card back |
-| `overview.html` + `overview.js` | The "Receivables" modal opened from the board button |
-| `settings.html` + `settings.js` | Payment terms and stage templates |
-| `shared.js` / `ui.css` | Money, date, status and totals logic / styles |
-| `icon.svg` / `icon-white.svg` | Icons |
-| `demo-preview.html` | Offline demo with fictional data; does not need deploying |
+| `index.html`, `connector.js` | Trello iframe connector: badges, buttons, card-back section |
+| `section.html`, `section.js` | The fee schedule on the card back |
+| `overview.html`, `overview.js` | Receivables overview modal |
+| `settings.html`, `settings.js` | Board settings |
+| `shared.js` | Money, dates, statuses, totals, badges, access rule |
+| `i18n.js` | All interface strings, English and Chinese |
+| `ui.css`, `icon.svg`, `icon-white.svg` | Styles and button icons |
+| `privacy.html`, `support.html` | Privacy policy and help page |
+| `LISTING.md`, `listing-icon.*` | Copy and icon for the Trello directory listing |
+| `demo-preview.html` | Offline demo with fictional data (not used by Trello) |
 
-## Deploy (one-off, about 15 minutes)
+## Self-hosting
 
-### 1. Host this folder at an HTTPS address
-Trello requires the connector to be served over HTTPS. GitHub Pages is the simplest option:
+1. Serve this folder over HTTPS (for example GitHub Pages).
+2. In https://trello.com/power-ups/admin create a Power-Up whose Iframe connector URL is `…/index.html`.
+3. Enable the capabilities: Board buttons, Card back section, Card badges, Card buttons, Card detail badges, Show settings.
+4. Add it to a board from Power-Ups → Custom.
 
-1. Create a **Public** repository on GitHub (e.g. `matter-fee-manager`). It holds code only, no client data.
-2. Upload every file in this folder to the repository root (the files, not the folder itself).
-3. Repository Settings → Pages → Source: `Deploy from a branch`; Branch: `main` / `(root)`; Save.
-4. After a minute or two you get: `https://<your-username>.github.io/matter-fee-manager/`
-5. Open `https://<your-username>.github.io/matter-fee-manager/section.html`. If you see the fee schedule
-   with a "Demo mode" banner, hosting works.
-
-(Any static host works the same way: Netlify, Cloudflare Pages, or your own site.)
-
-### 2. Register the Power-Up in Trello
-1. Go to https://trello.com/power-ups/admin (you must be an admin of the Workspace; the first visit asks you
-   to accept a developer agreement).
-2. Click **New**:
-   - Name: `Matter Fee Manager`
-   - Workspace: the one that contains your board
-   - Choose "My app will use Power-Up capabilities"
-   - **Iframe connector URL**: `https://<your-username>.github.io/matter-fee-manager/index.html`
-   - Email / Support contact / Author: your own details
-3. Open the **Capabilities** tab and switch on these six:
-   - Board buttons
-   - Card back section
-   - Card badges
-   - Card buttons
-   - Card detail badges
-   - Show settings
-4. Save.
-
-### 3. Enable it on the board
-Board → Power-Ups → **Custom** tab → Matter Fee Manager → Add.
-
-## First-run checklist (5 minutes)
-
-The calculations and interface were tested offline, but this code **has not been run inside a live Trello
-board**. After enabling it, confirm each item:
-
-- [ ] Any card shows a "Fee schedule" button
-- [ ] "Fee schedule" → "New blank fee schedule" makes a "Staged fee schedule" section appear on the card back
-- [ ] Enter a stage name and amount, click Save, close and reopen the card: the data is still there
-- [ ] Set a stage to "Done · to invoice": a yellow badge appears on the card front
-- [ ] The board has a "Receivables" button, and the card shows up in it
-- [ ] Cards without a fee schedule do **not** show the section
-
-If anything fails, press F12, open the browser Console and copy the red error text.
-
-## Day-to-day use
-
-1. **Create**: card → "Fee schedule" → use a template or start blank. Enter the contract total at the bottom;
-   a yellow warning appears if the stages do not add up to it.
-2. **Stage work finished** → set status to "Done · to invoice". The card front shows a yellow "To invoice $X".
-3. **Invoice sent** → set status to "Invoiced · unpaid" and enter the invoice number. The due date is filled
-   in automatically as invoice date + payment terms (7 days by default; change it in settings or per stage).
-4. **Not paid by the due date** → the badge turns red, "Overdue $X · Nd", and the stage moves to the top of
-   the receivables overview.
-5. **Money received** → set status to "Paid". The paid date defaults to today and can be edited.
-6. **Check the receivables overview weekly**: it is sorted overdue → to invoice → not yet due.
-
-Stages payable up front (e.g. on engagement): set them straight to "Invoiced · unpaid" or "Paid"; they do
-not need to pass through "Done".
+Opening `section.html`, `overview.html` or `settings.html` directly in a browser runs them in demo mode with
+fictional data.
 
 ## Known limits
 
-- **No reminders.** A Power-Up runs only while someone has the board open. It cannot send email or push
-  notifications. Rely on the badges and the overview.
-- **About 4,000 characters per card** (Trello's platform limit is 4096). Twenty fully filled stages use about
-  3,000 characters; a save that would exceed the limit is refused with a message.
-- **No part payments.** A stage is either unpaid or paid. If a client pays in two parts, split the stage.
-- **Two people editing the same card's schedule at once: the later save overwrites the earlier one.**
-- **Not an accounting record.** Amounts are typed in by hand for tracking. Nothing syncs with a trust account
-  or accounting software, and you should not expect the data in Trello's CSV export.
-- Every board member can see the fee data (`shared` visibility).
-- Designed for the desktop web app. Trello's mobile apps have limited support for custom Power-Ups; whether
-  the schedule shows there is untested.
+- No reminders or notifications. A Power-Up runs only while a board is open.
+- Not an accounting, tax or trust account record. Figures are typed in by hand.
+- Designed for the desktop web app; Trello's mobile apps have limited support for custom Power-Up sections.
 
-## Customising
+## Changelog
 
-- Status names: `MFM.STATUS` in `shared.js`
-- Badge wording and colours: `MFM.badges` in `shared.js`
-- Default payment terms and default template: `MFM.DEFAULT_CFG` in `shared.js` (once settings are saved on a
-  board, the board's settings take over)
+**1.1.0**
+- One build for English and 简体中文, with a language setting
+- Currency symbol setting; dates follow the browser's regional format
+- Part payments on invoiced stages
+- Concurrent-edit protection
+- Fee data hidden from viewers without edit access
+- CSV export from the receivables overview
+- Privacy policy and support pages
 
-After editing, re-upload the files and hard-refresh Trello (Ctrl/Cmd + Shift + R). GitHub Pages can take a few
-minutes to update.
+**1.0.0** Initial version.
+
+---
+
+© 2026 ZHIJIEVISA PTY LTD. All rights reserved.

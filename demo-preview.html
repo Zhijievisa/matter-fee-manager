@@ -132,22 +132,43 @@ textarea { min-height: 84px; resize: vertical; font-family: inherit; }
 .stage { border-bottom: 1px solid var(--line); padding: 6px 0; }
 .stage.head { padding: 4px 0; font-size: 12px; font-weight: 600; color: var(--muted); }
 .stage .l1 { display: grid; grid-template-columns: 20px minmax(0, 1fr) 108px 156px; gap: 6px; align-items: center; }
-.stage .l2 { display: grid; grid-template-columns: 20px 110px 190px minmax(0, 1fr) auto; gap: 6px; align-items: center; margin-top: 4px; }
+.stage .l2 { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+.stage .l2 .idx { width: 20px; flex: none; }
+.stage .l2 input.inv { width: 104px; flex: none; }
+.stage .l2 .dl { flex: none; }
+.stage .l2 .dl input[type="date"] { width: 132px; }
+.stage .l2 .dl.rv input { width: 84px; }
+.stage .l2 .hint { flex: 1 1 150px; min-width: 0; }
+.stage .l2 .acts { flex: none; margin-left: auto; }
 .stage .idx { color: var(--muted); font-size: 12px; text-align: center; }
 .stage .l2 input { padding: 3px 6px; font-size: 12.5px; }
 .stage .dl { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
-.stage .dl input { flex: 1; }
 .stage .hint { margin-top: 0; overflow: hidden; text-overflow: ellipsis; }
 .stage .acts { white-space: nowrap; }
 .stage.paid input.name, .stage.paid input.amt { color: var(--muted); }
 @media (max-width: 520px) {
   .stage .l1 { grid-template-columns: 20px minmax(0, 1fr) 96px; }
   .stage .l1 select { grid-column: 2 / 4; }
-  .stage .l2 { grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1.4fr); }
-  .stage .l2 .hint { grid-column: 2 / 3; }
-  .stage .l2 .acts { grid-column: 3 / 4; text-align: right; }
 }
 @media (max-width: 520px) { .stage.head .l1 span:nth-child(4) { display: none; } }
+
+/* overview: CSV export and heading row */
+.h2row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.h2row button { margin-bottom: 4px; }
+.csvbox { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin: 6px 0 10px; }
+textarea.csv { min-height: 140px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; margin-top: 6px; }
+/* settings */
+.field.two { display: flex; gap: 16px; flex-wrap: wrap; }
+.small { font-size: 12px; }
+.note .foot { margin-top: 6px; }
+a.link[href] { cursor: pointer; }
+
+.field.two > div > label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+/* static pages (privacy, support) */
+.doc { max-width: 720px; margin: 0 auto; padding: 28px 20px 60px; font-size: 15px; line-height: 1.6; }
+.doc h1 { font-size: 24px; margin: 0 0 4px; } .doc h2 { font-size: 17px; margin: 26px 0 6px; }
+.doc p, .doc li { color: var(--fg); } .doc .muted { font-size: 13px; }
+.doc code { background: var(--panel); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
 
 body { background: #f1f2f4; padding: 20px; }
 .demo-wrap { max-width: 760px; margin: 0 auto 20px; background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 2px #091e4226; }
@@ -159,50 +180,244 @@ body { background: #f1f2f4; padding: 20px; }
 .bdg.red { background: #c9372c; color: #fff; } .bdg.orange { background: #e2740f; color: #fff; }
 .bdg.yellow { background: #f5cd47; color: #533f04; } .bdg.green { background: #1f845a; color: #fff; }
 .sec-title { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+.langbar { max-width: 760px; margin: 0 auto 12px; display: flex; gap: 8px; align-items: center; font-size: 13px; color: #626f86; }
 </style>
 </head>
 <body>
-<div class="demo-wrap"><div class="demo-h">① CARD FRONT BADGES (see at a glance who owes money)</div><div class="front"><div class="nm">Sample Client A — 482</div><div id="demo-badges"></div></div></div>
-<div class="demo-wrap"><div class="demo-h">② CARD BACK: STAGED FEE SCHEDULE (try it: change a status, edit an amount, add a stage)</div><div class="sec-title">Staged fee schedule</div><div id="mfm-section" class="mfm"></div></div>
-<div class="demo-wrap wide"><div class="demo-h">③ BOARD BUTTON: RECEIVABLES OVERVIEW (whole board)</div><div id="mfm-overview" class="mfm"></div></div>
+<div class="langbar"><span>Language / 语言:</span><button id="lang-en">English</button><button id="lang-zh">中文</button><span>· v<span id="ver"></span> offline demo, fictional data</span></div>
+<div class="demo-wrap"><div class="demo-h">① CARD FRONT BADGES / 卡片正面徽章</div><div class="front"><div class="nm" id="demo-name"></div><div id="demo-badges"></div></div></div>
+<div class="demo-wrap"><div class="demo-h">② CARD BACK / 卡片背面</div><div class="sec-title" id="demo-sec"></div><div id="mfm-section" class="mfm"></div></div>
+<div class="demo-wrap wide"><div class="demo-h">③ BOARD BUTTON / 看板按钮</div><div id="mfm-overview" class="mfm"></div></div>
+<div class="demo-wrap"><div class="demo-h">④ SETTINGS / 设置</div><div id="mfm-settings" class="mfm"></div></div>
+<script>
+/* Matter Fee Manager — interface strings (English + 简体中文).
+ * {0} {1} … are placeholders. A key ending in _1 is the singular form used when the first argument is 1.
+ */
+(function (root) {
+  'use strict';
+  var STR = { en: {}, zh: {} };
+  function add(key, en, zh) { STR.en[key] = en; STR.zh[key] = zh; }
+
+  // statuses
+  add('st0', 'Not started', '未开始');
+  add('st1', 'Done · to invoice', '已完成 · 待开票');
+  add('st2', 'Invoiced · unpaid', '已开票 · 待付款');
+  add('st3', 'Paid', '已收款');
+
+  // per-stage timing notes
+  add('note_done_wait', 'Done {0}d ago, not invoiced', '完成 {0} 天未开票');
+  add('note_done_today', 'Done today, to invoice', '今天完成，待开票');
+  add('note_nodue', 'No due date set', '未设到期日');
+  add('note_late', '{0} days overdue', '逾期 {0} 天');
+  add('note_late_1', '1 day overdue', '逾期 1 天');
+  add('note_today', 'Due today', '今天到期');
+  add('note_in', 'Due in {0} days', '{0} 天后到期');
+  add('note_in_1', 'Due in 1 day', '1 天后到期');
+  add('note_paid_on', 'Paid {0}', '收款 {0}');
+  add('note_paid', 'Paid', '已收款');
+  add('note_part', 'Part paid {0}', '已收部分 {0}');
+
+  // badges
+  add('bd_over', 'Overdue {0} · {1}d', '逾期 {0} · {1}天');
+  add('bd_unpaid', 'Unpaid {0}', '待付款 {0}');
+  add('bd_toinv', 'To invoice {0}', '待开票 {0}');
+  add('bd_full', 'Paid in full {0}', '费用已收清 {0}');
+  add('bd_prog', 'Paid {0} / {1}', '已收 {0} / {1}');
+  add('fee_progress', 'Fee progress', '收费进度');
+  add('recv_now', 'Receivable now', '应收未收');
+
+  // default template
+  add('tpl_name', 'Three-stage example (fill in amounts)', '三阶段示例（金额自填）');
+  add('tpl_s1', 'Deposit on engagement', '签约 / 首期');
+  add('tpl_s2', 'Work delivered', '工作交付');
+  add('tpl_s3', 'Completion', '结案');
+
+  // connector: buttons, menus, dialogs
+  add('btn_fee', 'Fee schedule', '收费表');
+  add('sec_title', 'Staged fee schedule', '分阶段收费表');
+  add('btn_recv', 'Receivables', '应收总览');
+  add('ov_title', 'Matter Fee · Receivables', 'Matter Fee · 应收总览');
+  add('set_title', 'Matter Fee settings', 'Matter Fee 设置');
+  add('new_blank', 'New blank fee schedule', '新建空白收费表');
+  add('use_tpl', 'Use template: {0}', '套用模板：{0}');
+  add('append_tpl', 'Append template stages: {0}', '追加模板阶段：{0}');
+  add('del_menu', 'Delete this card\'s fee schedule…', '删除本卡收费表…');
+  add('open_ov', 'Open receivables overview', '打开应收总览');
+  add('too_many', 'Too many stages: this would exceed Trello\'s per-card storage limit. Nothing was added.', '阶段太多，超出 Trello 单卡存储上限，未追加。');
+  add('del_title', 'Delete fee schedule', '删除收费表');
+  add('del_msg', 'This deletes every fee stage recorded on this card. It cannot be undone.', '将删除本卡片的全部收费阶段记录，无法恢复。');
+  add('del_ok', 'Delete', '删除');
+  add('cancel', 'Cancel', '取消');
+
+  // card-back section
+  add('err_amount', 'An amount is not valid (digits only, up to two decimals). Fix it, then save.', '有金额格式不对（只能是数字，最多两位小数），改正后再保存。');
+  add('err_recv', 'Received cannot be more than the stage amount. Set the stage to Paid instead.', '已收金额不能超过阶段金额。全部收到请直接把状态改为「已收款」。');
+  add('err_size', 'This exceeds Trello\'s per-card storage limit (about 4,000 characters). Shorten stage names or use fewer stages.', '内容超出 Trello 单卡存储上限（约 4000 字符）。请缩短阶段名称或减少阶段数。');
+  add('err_save', 'Save failed: {0}. Your edits are still on the page; try again.', '保存失败：{0}。修改仍在页面上，可重试。');
+  add('err_unknown', 'unknown error', '未知错误');
+  add('err_conflict', 'Someone else changed this fee schedule while you were editing. Nothing has been overwritten yet.', '在你编辑期间，其他人修改了这张卡片的收费表。目前没有覆盖任何内容。');
+  add('btn_reload', 'Load their version (discard mine)', '载入对方的版本（放弃我的修改）');
+  add('btn_overwrite', 'Keep mine (overwrite theirs)', '保留我的（覆盖对方的）');
+  add('k_total', 'Contract total', '合同总额');
+  add('n_stages', '{0} stages', '{0} 个阶段');
+  add('n_stages_1', '1 stage', '1 个阶段');
+  add('k_recv', 'Received', '已收款');
+  add('n_of_stages', '{0} / {1} stages paid', '{0} / {1} 阶段已收清');
+  add('sub_toinv', 'To invoice {0}', '待开票 {0}');
+  add('sub_unpaid', 'Unpaid {0}', '待付款 {0}');
+  add('sub_over', '{0}d overdue', '逾期 {0} 天');
+  add('k_now', 'Receivable now', '应收未收');
+  add('sub_none', 'Nothing due right now', '目前没有该收的款');
+  add('k_notdue', 'Not yet due', '未到阶段');
+  add('sub_notdone', 'Work not done yet', '工作未完成，暂不收');
+  add('lg_recv', 'Received', '已收款');
+  add('lg_over', 'Overdue', '逾期未付');
+  add('lg_inv', 'Invoiced, unpaid', '已开票待付款');
+  add('lg_done', 'Done, to invoice', '已完成待开票');
+  add('lg_notdue', 'Not yet due', '未到阶段');
+  add('mismatch', 'Stages add up to {0} ≠ contract total {1} (difference {2}). Check the stage amounts or the contract total.', '阶段合计 {0} ≠ 合同总额 {1}（差 {2}）。请核对阶段金额或合同总额。');
+  add('ro', 'Read-only (you cannot edit this card)', '只读（你对这张卡片没有编辑权限）');
+  add('saving', 'Saving…', '保存中…');
+  add('unsaved', 'Unsaved changes', '有未保存的修改');
+  add('discard', 'Discard', '撤销');
+  add('save', 'Save', '保存');
+  add('saved', 'Saved', '已保存');
+  add('ph_stage', 'Stage name (e.g. Work delivered)', '阶段名称（如：递交申请）');
+  add('ph_inv', 'Invoice no.', '发票号');
+  add('ti_paid', 'Date paid', '收款日');
+  add('ti_due', 'Payment due date (applies once invoiced)', '付款到期日（开票后生效）');
+  add('confirm_del', 'Confirm delete', '确认删除');
+  add('ti_del', 'Delete this stage', '删除此阶段');
+  add('d_done', 'Done {0}', '完成 {0}');
+  add('d_inv', 'Invoiced {0}', '开票 {0}');
+  add('l_paid', 'Paid', '收款日');
+  add('l_due', 'Due', '到期日');
+  add('l_recv', 'Received', '已收');
+  add('ti_recv', 'Amount received so far on this invoice (part payment)', '这张账单目前已收到的金额（部分付款）');
+  add('up', 'Move up', '上移');
+  add('down', 'Move down', '下移');
+  add('empty', 'No fee stages yet.', '还没有收费阶段。');
+  add('h_stage', 'Stage', '阶段');
+  add('h_amount', 'Amount', '金额');
+  add('h_status', 'Status', '状态');
+  add('optional', 'optional', '可不填');
+  add('demo', 'Demo mode: not connected to Trello. The data is fictional and resets on refresh.', '演示模式：未连接 Trello，数据为虚构示例，刷新即还原。');
+  add('add_stage', '+ Add stage', '+ 添加阶段');
+  add('contract', 'Contract total (for cross-check)', '合同总额（用于核对）');
+  add('no_access', 'Fee details are visible to board members with edit access only.', '收费明细仅对有编辑权限的看板成员显示。');
+
+  // overview
+  add('err_read', 'Could not read board data: {0}', '读取看板数据失败：{0}');
+  add('open_card', 'Open card', '打开卡片');
+  add('t_over', 'Overdue', '逾期未付');
+  add('t_over_sub', 'Past the due date', '已过付款到期日');
+  add('t_inv', 'Invoiced, unpaid', '已开票待付款');
+  add('t_inv_sub', 'Not yet due', '未到期');
+  add('t_done', 'Done, to invoice', '已完成待开票');
+  add('t_done_sub', 'Time to bill', '该发账单了');
+  add('t_bal', 'Contract balance', '合同剩余未收');
+  add('t_bal_sub', 'Incl. stages not started', '含未到阶段');
+  add('t_recv', 'Total received', '已收款合计');
+  add('t_recv_sub', '{0} matters with a schedule', '{0} 个案件有收费表');
+  add('t_recv_sub_1', '1 matter with a schedule', '1 个案件有收费表');
+  add('none_todo', 'Nothing to invoice or chase right now.', '目前没有需要开票或催款的阶段。');
+  add('c_matter', 'Matter (card)', '案件（卡片）');
+  add('c_list', 'List', '列表');
+  add('c_stage', 'Stage', '阶段');
+  add('c_amount', 'Outstanding', '未收金额');
+  add('c_status', 'Status', '状态');
+  add('c_inv', 'Invoice no.', '发票号');
+  add('c_timing', 'Timing', '时间');
+  add('of_amount', 'of {0}', '共 {0}');
+  add('unnamed', '(unnamed stage)', '（未命名阶段）');
+  add('none_all', 'No card on this board has a fee schedule yet. Open a card, then use the "Fee schedule" Power-Up button to create one.', '这个看板上还没有卡片建立收费表。打开卡片，用 Power-Up 的「收费表」按钮新建。');
+  add('c_total', 'Contract total', '合同总额');
+  add('c_received', 'Received', '已收');
+  add('c_now', 'Receivable now', '应收未收');
+  add('c_notdue', 'Not yet due', '未到阶段');
+  add('c_prog', 'Progress', '进度');
+  add('mismatch_short', 'Stages ≠ contract total', '阶段合计 ≠ 合同总额');
+  add('demo_short', 'Demo mode: fictional data.', '演示模式：虚构数据。');
+  add('h_todo', 'Needs follow-up', '需要跟进');
+  add('h_todo_sub', '{0} stages · overdue → to invoice → not yet due', '{0} 个阶段 · 逾期 → 待开票 → 未到期');
+  add('h_todo_sub_1', '1 stage', '1 个阶段');
+  add('h_all', 'All matters', '全部案件');
+  add('h_all_sub', 'sorted by amount receivable now', '按应收未收金额排序');
+  add('footnote', 'Figures come from each card\'s fee schedule (as at {0}; archived cards excluded). Amounts are entered by hand and are not accounting or trust records.', '数据来自各卡片的收费表（统计日期 {0}，不含已归档卡片）。金额为手工录入，不是会计/信托账记录。');
+  add('export', 'Export CSV', '导出 CSV');
+  add('export_hint', 'Copy this text and paste it into a spreadsheet, or save it as a .csv file.', '复制下面的文字粘贴到表格软件，或另存为 .csv 文件。');
+  add('copy', 'Copy', '复制');
+  add('copied', 'Copied', '已复制');
+  add('close', 'Close', '关闭');
+  add('csv_head', 'Card,List,Stage,Amount,Received,Outstanding,Status,Invoice no.,Due date,Date paid,Date done,Date invoiced', '卡片,列表,阶段,金额,已收,未收,状态,发票号,到期日,收款日,完成日,开票日');
+
+  // settings
+  add('s_lang', 'Language', '界面语言');
+  add('s_lang_auto', 'Automatic (follow Trello / browser)', '自动（跟随 Trello / 浏览器）');
+  add('s_cur', 'Currency symbol', '货币符号');
+  add('s_terms', 'Default payment terms (days from invoice to due date)', '默认付款期限（开票后多少天到期）');
+  add('s_days', ' days', ' 天');
+  add('s_tpls', 'Stage templates (one per line: Stage name | amount; use 0 to fill in later)', '阶段模板（每行：阶段名称 | 金额，金额可写 0 以后再填）');
+  add('ph_tpl_name', 'Template name', '模板名称');
+  add('ph_tpl_lines', 'One stage per line: Stage name | amount\ne.g. Work delivered | 2200', '每行一个阶段：阶段名称 | 金额\n例：递交申请 | 2200');
+  add('del_tpl', 'Delete template', '删除模板');
+  add('new_tpl', '+ New template', '+ 新模板');
+  add('save_settings', 'Save settings', '保存设置');
+  add('e_noname', 'Template {0} has no name', '第 {0} 个模板没有名称');
+  add('e_badline', '"{0}": line {1} is not valid', '「{0}」第 {1} 行格式不对');
+  add('e_tplname', 'Template {0}', '模板 {0}');
+  add('e_size', 'The settings exceed Trello\'s board storage limit (about 4,000 characters). Please trim the templates.', '设置内容超出 Trello 看板存储上限（约 4000 字符），请删减模板。');
+  add('about', 'Matter Fee Manager {0} · Fee data is stored only in your Trello board.', 'Matter Fee Manager {0} · 收费数据只保存在你的 Trello 看板里。');
+  add('privacy', 'Privacy', '隐私政策');
+  add('support', 'Help & support', '帮助与支持');
+
+  root.MFM_STR = STR;
+  if (typeof module !== 'undefined' && module.exports) module.exports = STR;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
 <script>
 /* Matter Fee Manager — shared logic (money, dates, statuses, totals, badges, demo data)
- * Where data lives:
+ * Where data lives (nothing is sent anywhere else):
  *   card   t.set('card',  'shared', 'fee', {...})   the staged fee schedule of each card
- *   board  t.set('board', 'shared', 'cfg', {...})   payment terms, stage templates
+ *   board  t.set('board', 'shared', 'cfg', {...})   language, currency symbol, payment terms, templates
  * Trello limit: 4096 characters of serialized data per scope/visibility pair.
  */
 (function (root) {
   'use strict';
 
-  var MFM = {};
-  MFM.KEY = 'fee';
-  MFM.CFG_KEY = 'cfg';
-  MFM.SIZE_LIMIT = 3900; // headroom below 4096
+  var MFM = { VERSION: '1.1.0', KEY: 'fee', CFG_KEY: 'cfg', SIZE_LIMIT: 3900 };
+  var STR = root.MFM_STR || (typeof require === 'function' ? require('./i18n.js') : { en: {}, zh: {} });
 
-  // Status: 0 not started → 1 done, to invoice → 2 invoiced, unpaid → 3 paid
-  MFM.STATUS = [
-    { id: 0, label: 'Not started', cls: 's0' },
-    { id: 1, label: 'Done · to invoice', cls: 's1' },
-    { id: 2, label: 'Invoiced · unpaid', cls: 's2' },
-    { id: 3, label: 'Paid', cls: 's3' }
-  ];
-
-  MFM.DEFAULT_CFG = {
-    terms: 7,
-    tpls: [
-      {
-        n: 'Three-stage example (fill in amounts)',
-        st: [
-          { n: 'Engagement / first instalment', a: 0 },
-          { n: 'Application lodged', a: 0 },
-          { n: 'Grant / file closed', a: 0 }
-        ]
-      }
-    ]
+  /* ---------- language and currency ---------- */
+  MFM.lang = 'en';
+  MFM.cur = '$';
+  MFM.detectLang = function () {
+    var l = String(root.locale || (root.navigator && root.navigator.language) || 'en').toLowerCase();
+    return l.indexOf('zh') === 0 ? 'zh' : 'en';
   };
+  MFM.useCfg = function (cfg) {
+    MFM.lang = cfg && (cfg.lang === 'en' || cfg.lang === 'zh') ? cfg.lang : MFM.detectLang();
+    MFM.cur = cfg && typeof cfg.cur === 'string' && cfg.cur ? cfg.cur : '$';
+    return cfg;
+  };
+  // tr('key', a, b): looks up the string in the current language, falls back to English.
+  MFM.tr = function (key) {
+    var args = arguments;
+    var table = STR[MFM.lang] || STR.en;
+    var s;
+    if (args[1] === 1 && table[key + '_1'] !== undefined) s = table[key + '_1'];
+    else s = table[key];
+    if (s === undefined) s = STR.en[key];
+    if (s === undefined) return key;
+    return s.replace(/\{(\d)\}/g, function (m, i) {
+      var v = args[+i + 1];
+      return v === undefined || v === null ? '' : String(v);
+    });
+  };
+  MFM.statusLabel = function (s) { return MFM.tr('st' + s); };
 
-  /* ---------- dates ---------- */
+  /* ---------- dates (stored as yyyy-mm-dd, shown in the browser's regional format) ---------- */
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function parseIso(s) {
@@ -223,13 +438,19 @@ body { background: #f1f2f4; padding: 20px; }
   };
   MFM.fmtDate = function (s) {
     var d = parseIso(s);
-    return d ? pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() : '';
+    if (!d) return '';
+    try {
+      var loc = (root.navigator && root.navigator.language) || undefined;
+      return new Intl.DateTimeFormat(loc, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(d);
+    } catch (e) {
+      return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+    }
   };
 
   /* ---------- money (stored as integer cents to avoid float errors) ---------- */
   MFM.parseMoney = function (v) {
     if (typeof v === 'number') return isFinite(v) && v >= 0 ? Math.round(v * 100) : null;
-    var s = String(v == null ? '' : v).replace(/[\s,，$＄]/g, '').replace(/^(AUD|A)/i, '');
+    var s = String(v == null ? '' : v).replace(/[\s,，$＄€£¥]/g, '').replace(/^[A-Za-z]{1,3}(?=\d)/, '');
     if (s === '') return 0;
     var m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(s);
     if (!m) return null;
@@ -241,9 +462,9 @@ body { background: #f1f2f4; padding: 20px; }
     cents = Math.round(cents || 0);
     var neg = cents < 0;
     if (neg) cents = -cents;
-    var dollars = Math.floor(cents / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    var whole = Math.floor(cents / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     var c = cents % 100;
-    var out = '$' + dollars + (short && c === 0 ? '' : '.' + pad(c));
+    var out = MFM.cur + whole + (short && c === 0 ? '' : '.' + pad(c));
     return neg ? '-' + out : out;
   };
   MFM.moneyInput = function (cents) {
@@ -251,53 +472,67 @@ body { background: #f1f2f4; padding: 20px; }
     return Math.floor(cents / 100) + '.' + pad(cents % 100);
   };
 
-  /* ---------- data shape ---------- */
-  MFM.newId = function () {
-    return Math.random().toString(36).slice(2, 8);
-  };
-  MFM.newStage = function (name, amount) {
-    return { i: MFM.newId(), n: name || '', a: amount || 0, s: 0 };
-  };
-  // normalise whatever was stored into {v, c?, st:[{i,n,a,s,inv,d,dd,bd,pd}]}
+  /* ---------- data shape ----------
+   * fee   {v, rv, c?, st:[{i,n,a,s,r?,inv?,d?,dd?,bd?,pd?}]}
+   *   rv  revision counter, bumped on every save (used to detect concurrent edits)
+   *   c   contract total (cents, optional)        a  stage amount (cents)
+   *   s   0 not started · 1 done, to invoice · 2 invoiced, unpaid · 3 paid
+   *   r   amount received so far while s === 2 (part payment)
+   *   d   payment due date   dd  date done   bd  date invoiced   pd  date paid
+   */
+  MFM.newId = function () { return Math.random().toString(36).slice(2, 8); };
+  MFM.newStage = function (name, amount) { return { i: MFM.newId(), n: name || '', a: amount || 0, s: 0 }; };
   MFM.normalize = function (fee) {
-    var out = { v: 1, st: [] };
+    var out = { v: 1, rv: 0, st: [] };
     if (!fee || typeof fee !== 'object') return out;
+    if (typeof fee.rv === 'number' && fee.rv > 0) out.rv = Math.floor(fee.rv);
     if (typeof fee.c === 'number' && fee.c > 0) out.c = Math.round(fee.c);
     (fee.st || []).forEach(function (s) {
       if (!s || typeof s !== 'object') return;
       var st = {
         i: s.i || MFM.newId(),
         n: String(s.n || ''),
-        a: typeof s.a === 'number' && isFinite(s.a) ? Math.round(s.a) : 0,
+        a: typeof s.a === 'number' && isFinite(s.a) && s.a > 0 ? Math.round(s.a) : 0,
         s: s.s === 1 || s.s === 2 || s.s === 3 ? s.s : 0
       };
+      if (st.s === 2 && typeof s.r === 'number' && s.r > 0) st.r = Math.min(Math.round(s.r), st.a);
       ['inv', 'd', 'dd', 'bd', 'pd'].forEach(function (k) { if (s[k]) st[k] = String(s[k]); });
       out.st.push(st);
     });
     return out;
   };
-  // drop empty fields before saving to save characters
   MFM.compact = function (fee) {
     var n = MFM.normalize(fee);
     n.st.forEach(function (s) { s.n = s.n.trim(); });
     return n;
   };
+  // money still owed on a stage that has been invoiced
+  MFM.owing = function (stage) { return stage.s === 2 ? stage.a - Math.min(stage.r || 0, stage.a) : stage.a; };
+
+  MFM.defaultCfg = function () {
+    return {
+      lang: 'auto', cur: '$', terms: 7,
+      tpls: [{ n: MFM.tr('tpl_name'), st: [{ n: MFM.tr('tpl_s1'), a: 0 }, { n: MFM.tr('tpl_s2'), a: 0 }, { n: MFM.tr('tpl_s3'), a: 0 }] }]
+    };
+  };
   MFM.cfg = function (raw) {
-    var d = MFM.DEFAULT_CFG;
-    if (!raw || typeof raw !== 'object') return JSON.parse(JSON.stringify(d));
+    if (!raw || typeof raw !== 'object') { MFM.useCfg(null); return MFM.defaultCfg(); }
     var terms = parseInt(raw.terms, 10);
-    var out = { terms: isFinite(terms) && terms >= 0 ? terms : d.terms, tpls: [] };
-    (Array.isArray(raw.tpls) ? raw.tpls : d.tpls).forEach(function (t) {
+    var out = {
+      lang: raw.lang === 'en' || raw.lang === 'zh' ? raw.lang : 'auto',
+      cur: typeof raw.cur === 'string' && raw.cur.trim() ? raw.cur.trim().slice(0, 4) : '$',
+      terms: isFinite(terms) && terms >= 0 ? terms : 7,
+      tpls: []
+    };
+    MFM.useCfg(out);
+    (Array.isArray(raw.tpls) ? raw.tpls : MFM.defaultCfg().tpls).forEach(function (t) {
       if (!t || !t.n) return;
-      out.tpls.push({
-        n: String(t.n),
-        st: (t.st || []).map(function (s) { return { n: String(s.n || ''), a: Math.round(s.a || 0) }; })
-      });
+      out.tpls.push({ n: String(t.n), st: (t.st || []).map(function (s) { return { n: String(s.n || ''), a: Math.round(s.a || 0) }; }) });
     });
     return out;
   };
   MFM.fromTemplate = function (tpl) {
-    return { v: 1, st: (tpl && tpl.st ? tpl.st : []).map(function (s) { return MFM.newStage(s.n, s.a); }) };
+    return { v: 1, rv: 0, st: (tpl && tpl.st ? tpl.st : []).map(function (s) { return MFM.newStage(s.n, s.a); }) };
   };
   // template text: one stage per line, "Stage name | amount"
   MFM.parseTemplateLines = function (text) {
@@ -320,15 +555,16 @@ body { background: #f1f2f4; padding: 20px; }
   /* ---------- status change: stamp dates automatically ---------- */
   MFM.setStatus = function (stage, to, cfg, today) {
     today = today || MFM.today();
-    var terms = cfg && typeof cfg.terms === 'number' ? cfg.terms : MFM.DEFAULT_CFG.terms;
+    var terms = cfg && typeof cfg.terms === 'number' ? cfg.terms : 7;
     to = +to;
-    if (to >= 1 && !stage.dd) stage.dd = today;                 // date work completed
-    if (to >= 2 && !stage.bd) stage.bd = today;                 // invoice date
-    if (to >= 2 && !stage.d) stage.d = MFM.addDays(stage.bd, terms); // payment due date
-    if (to >= 3 && !stage.pd) stage.pd = today;                 // date paid
+    if (to >= 1 && !stage.dd) stage.dd = today;
+    if (to >= 2 && !stage.bd) stage.bd = today;
+    if (to >= 2 && !stage.d) stage.d = MFM.addDays(stage.bd, terms);
+    if (to >= 3 && !stage.pd) stage.pd = today;
     if (to < 3) delete stage.pd;
     if (to < 2) { delete stage.bd; delete stage.d; }
     if (to < 1) delete stage.dd;
+    if (to !== 2) delete stage.r;
     stage.s = to;
     return stage;
   };
@@ -338,16 +574,16 @@ body { background: #f1f2f4; padding: 20px; }
     today = today || MFM.today();
     if (stage.s === 1) {
       var w = stage.dd ? MFM.daysBetween(stage.dd, today) : 0;
-      return { kind: 'warn', days: w, text: w > 0 ? 'Done ' + w + 'd ago, not invoiced' : 'Done today, to invoice' };
+      return { kind: 'warn', days: w, text: w > 0 ? MFM.tr('note_done_wait', w) : MFM.tr('note_done_today') };
     }
     if (stage.s === 2) {
-      if (!stage.d) return { kind: 'wait', days: 0, text: 'No due date set' };
+      if (!stage.d) return { kind: 'wait', days: 0, text: MFM.tr('note_nodue') };
       var late = MFM.daysBetween(stage.d, today);
-      if (late > 0) return { kind: 'late', days: late, text: late + (late === 1 ? ' day' : ' days') + ' overdue' };
-      if (late === 0) return { kind: 'wait', days: 0, text: 'Due today' };
-      return { kind: 'wait', days: late, text: 'Due in ' + (-late) + (late === -1 ? ' day' : ' days') };
+      if (late > 0) return { kind: 'late', days: late, text: MFM.tr('note_late', late) };
+      if (late === 0) return { kind: 'wait', days: 0, text: MFM.tr('note_today') };
+      return { kind: 'wait', days: late, text: MFM.tr('note_in', -late) };
     }
-    if (stage.s === 3) return { kind: 'ok', days: 0, text: stage.pd ? 'Paid ' + MFM.fmtDate(stage.pd) : 'Paid' };
+    if (stage.s === 3) return { kind: 'ok', days: 0, text: stage.pd ? MFM.tr('note_paid_on', MFM.fmtDate(stage.pd)) : MFM.tr('note_paid') };
     return { kind: 'none', days: 0, text: '' };
   };
 
@@ -355,32 +591,24 @@ body { background: #f1f2f4; padding: 20px; }
   MFM.summarize = function (fee, today) {
     today = today || MFM.today();
     var f = MFM.normalize(fee);
-    var r = {
-      n: f.st.length, nPaid: 0,
-      sum: 0,        // sum of all stages
-      paid: 0,       // paid
-      toInvoice: 0,  // done, to invoice
-      awaiting: 0,   // invoiced, unpaid (incl. overdue)
-      overdue: 0,    // of which overdue
-      overdueDays: 0,
-      notDue: 0,     // not started
-      contract: f.c || null
-    };
+    var r = { n: f.st.length, nPaid: 0, sum: 0, paid: 0, toInvoice: 0, awaiting: 0, overdue: 0, overdueDays: 0, notDue: 0, contract: f.c || null };
     f.st.forEach(function (s) {
       r.sum += s.a;
       if (s.s === 3) { r.paid += s.a; r.nPaid++; }
       else if (s.s === 2) {
-        r.awaiting += s.a;
+        var owing = MFM.owing(s);
+        r.paid += s.a - owing;
+        r.awaiting += owing;
         var late = s.d ? MFM.daysBetween(s.d, today) : 0;
-        if (late > 0) { r.overdue += s.a; if (late > r.overdueDays) r.overdueDays = late; }
+        if (late > 0 && owing > 0) { r.overdue += owing; if (late > r.overdueDays) r.overdueDays = late; }
       }
       else if (s.s === 1) r.toInvoice += s.a;
       else r.notDue += s.a;
     });
-    r.receivable = r.toInvoice + r.awaiting;        // due now but not yet received
+    r.receivable = r.toInvoice + r.awaiting;   // due now but not yet received
     r.total = r.contract !== null ? r.contract : r.sum;
     r.mismatch = r.contract !== null && r.contract !== r.sum;
-    r.outstanding = r.sum - r.paid;                 // contract balance still to collect
+    r.outstanding = r.sum - r.paid;            // contract balance still to collect
     return r;
   };
 
@@ -388,21 +616,34 @@ body { background: #f1f2f4; padding: 20px; }
   MFM.badges = function (fee, today) {
     if (!fee) return [];
     var r = MFM.summarize(fee, today);
-    if (!r.n) return [];
+    if (!r.n || r.sum === 0) return [];
     var out = [];
-    if (r.overdue > 0) out.push({ text: 'Overdue ' + MFM.fmtMoney(r.overdue, true) + ' · ' + r.overdueDays + 'd', color: 'red' });
-    if (r.awaiting - r.overdue > 0) out.push({ text: 'Unpaid ' + MFM.fmtMoney(r.awaiting - r.overdue, true), color: 'orange' });
-    if (r.toInvoice > 0) out.push({ text: 'To invoice ' + MFM.fmtMoney(r.toInvoice, true), color: 'yellow' });
+    if (r.overdue > 0) out.push({ text: MFM.tr('bd_over', MFM.fmtMoney(r.overdue, true), r.overdueDays), color: 'red' });
+    if (r.awaiting - r.overdue > 0) out.push({ text: MFM.tr('bd_unpaid', MFM.fmtMoney(r.awaiting - r.overdue, true)), color: 'orange' });
+    if (r.toInvoice > 0) out.push({ text: MFM.tr('bd_toinv', MFM.fmtMoney(r.toInvoice, true)), color: 'yellow' });
     if (!out.length) {
-      if (r.sum > 0 && r.paid === r.sum) out.push({ text: 'Paid in full ' + MFM.fmtMoney(r.sum, true), color: 'green' });
-      else out.push({ text: 'Paid ' + MFM.fmtMoney(r.paid, true) + ' / ' + MFM.fmtMoney(r.sum, true) });
+      if (r.paid === r.sum) out.push({ text: MFM.tr('bd_full', MFM.fmtMoney(r.sum, true)), color: 'green' });
+      else out.push({ text: MFM.tr('bd_prog', MFM.fmtMoney(r.paid, true), MFM.fmtMoney(r.sum, true)) });
     }
     return out;
   };
 
   MFM.sizeOf = function (obj) { return JSON.stringify(obj).length; };
 
-  /* ---------- tiny DOM helper (textContent only, no HTML strings) ---------- */
+  /* ---------- who may see fee data ----------
+   * Fee figures are shown only to signed-in members who can edit the board. This is a display rule,
+   * not a security boundary: Trello "shared" plugin data is readable by anyone who can read the board.
+   */
+  MFM.canSee = function (t) {
+    try {
+      if (typeof t.isMemberSignedIn === 'function' && !t.isMemberSignedIn()) return false;
+      var p = (t.getContext() || {}).permissions;
+      if (p && p.board && p.board !== 'write') return false;
+    } catch (e) { /* if the context is unavailable, fall through and show */ }
+    return true;
+  };
+
+  /* ---------- tiny DOM helpers (textContent only, never HTML strings) ---------- */
   MFM.h = function (tag, attrs, kids) {
     var el = document.createElement(tag);
     if (attrs) Object.keys(attrs).forEach(function (k) {
@@ -421,13 +662,10 @@ body { background: #f1f2f4; padding: 20px; }
     });
     return el;
   };
-
-  // replace children (null / false are skipped)
   MFM.fill = function (el, kids) {
     el.replaceChildren.apply(el, (kids || []).filter(function (k) { return k !== null && k !== undefined && k !== false; }));
     return el;
   };
-
   MFM.applyTheme = function (t) {
     try {
       var ctx = t.getContext ? t.getContext() : null;
@@ -447,53 +685,56 @@ body { background: #f1f2f4; padding: 20px; }
     return MFM.mockT();
   };
 
-  // fictional demo data (not real clients), used only when a page is opened outside Trello
+  // Fictional demo data, used only when a page is opened outside Trello.
   var mock = null;
   MFM.mockT = function () {
     if (mock) return mock;
     var today = MFM.today();
     var ago = function (n) { return MFM.addDays(today, -n); };
+    var zh = MFM.detectLang() === 'zh';
+    var N = zh
+      ? { l1: '进行中', l2: '已交付', c: '示例客户 ', m: ' — 案件 ', none: '（无收费表）', s1: '签约 / 首期', s2: '初稿交付', s3: '正式递交', s4: '结案' }
+      : { l1: 'In progress', l2: 'Delivered', c: 'Sample Client ', m: ' — Matter ', none: ' (no fee schedule)', s1: 'Deposit on engagement', s2: 'Draft delivered', s3: 'Filing lodged', s4: 'Completion' };
     var store = {
-      board: { cfg: JSON.parse(JSON.stringify(MFM.DEFAULT_CFG)) },
-      lists: [{ id: 'l1', name: 'Preparing' }, { id: 'l2', name: 'Lodged' }],
+      board: {},
+      lists: [{ id: 'l1', name: N.l1 }, { id: 'l2', name: N.l2 }],
       cards: [
-        { id: 'c1', name: 'Sample Client A — 482', idList: 'l2' },
-        { id: 'c2', name: 'Sample Client B — 820', idList: 'l1' },
-        { id: 'c3', name: 'Sample Client C — 186', idList: 'l2' },
-        { id: 'c4', name: 'Sample Client D — 600 (no fee schedule)', idList: 'l1' }
+        { id: 'c1', name: N.c + 'A' + N.m + '101', idList: 'l2' },
+        { id: 'c2', name: N.c + 'B' + N.m + '102', idList: 'l1' },
+        { id: 'c3', name: N.c + 'C' + N.m + '103', idList: 'l2' },
+        { id: 'c4', name: N.c + 'D' + N.m + '104' + N.none, idList: 'l1' }
       ],
       fee: {
-        c1: { v: 1, c: 660000, st: [
-          { i: 'a1', n: 'Engagement / first instalment', a: 165000, s: 3, inv: 'INV-0001', dd: ago(60), bd: ago(60), d: ago(53), pd: ago(58) },
-          { i: 'a2', n: 'SBS + Nomination lodged', a: 220000, s: 2, inv: 'INV-0002', dd: ago(21), bd: ago(20), d: ago(13) },
-          { i: 'a3', n: 'Visa application lodged', a: 165000, s: 1, dd: ago(3) },
-          { i: 'a4', n: 'Grant / file closed', a: 110000, s: 0 }
+        c1: { v: 1, rv: 3, c: 660000, st: [
+          { i: 'a1', n: N.s1, a: 165000, s: 3, inv: 'INV-0001', dd: ago(60), bd: ago(60), d: ago(53), pd: ago(58) },
+          { i: 'a2', n: N.s2, a: 220000, s: 2, r: 100000, inv: 'INV-0002', dd: ago(21), bd: ago(20), d: ago(13) },
+          { i: 'a3', n: N.s3, a: 165000, s: 1, dd: ago(3) },
+          { i: 'a4', n: N.s4, a: 110000, s: 0 }
         ] },
-        c2: { v: 1, st: [
-          { i: 'b1', n: 'Engagement / first instalment', a: 200000, s: 3, inv: 'INV-0003', dd: ago(30), bd: ago(30), d: ago(23), pd: ago(29) },
-          { i: 'b2', n: 'Application lodged', a: 250000, s: 2, inv: 'INV-0004', dd: ago(2), bd: ago(2), d: MFM.addDays(today, 5) },
-          { i: 'b3', n: 'Grant', a: 100000, s: 0 }
+        c2: { v: 1, rv: 2, st: [
+          { i: 'b1', n: N.s1, a: 200000, s: 3, inv: 'INV-0003', dd: ago(30), bd: ago(30), d: ago(23), pd: ago(29) },
+          { i: 'b2', n: N.s2, a: 250000, s: 2, inv: 'INV-0004', dd: ago(2), bd: ago(2), d: MFM.addDays(today, 5) },
+          { i: 'b3', n: N.s4, a: 100000, s: 0 }
         ] },
-        c3: { v: 1, st: [
-          { i: 'd1', n: 'Engagement / first instalment', a: 300000, s: 3, inv: 'INV-0005', dd: ago(90), bd: ago(90), d: ago(83), pd: ago(88) },
-          { i: 'd2', n: 'Grant / file closed', a: 300000, s: 3, inv: 'INV-0006', dd: ago(10), bd: ago(10), d: ago(3), pd: ago(5) }
+        c3: { v: 1, rv: 2, st: [
+          { i: 'd1', n: N.s1, a: 300000, s: 3, inv: 'INV-0005', dd: ago(90), bd: ago(90), d: ago(83), pd: ago(88) },
+          { i: 'd2', n: N.s4, a: 300000, s: 3, inv: 'INV-0006', dd: ago(10), bd: ago(10), d: ago(3), pd: ago(5) }
         ] }
       }
     };
     var renderers = [];
     var fire = function () { renderers.forEach(function (fn) { setTimeout(fn, 0); }); };
     var cardId = function (scope) { return scope === 'card' ? 'c1' : scope; };
+    var clone = function (v) { return JSON.parse(JSON.stringify(v)); };
     mock = {
       _store: store,
       get: function (scope, vis, key, def) {
-        var v;
-        if (scope === 'board') v = store.board[key];
-        else v = (store[key] || {})[cardId(scope)];
-        return Promise.resolve(v === undefined ? def : JSON.parse(JSON.stringify(v)));
+        var v = scope === 'board' ? store.board[key] : (store[key] || {})[cardId(scope)];
+        return Promise.resolve(v === undefined ? def : clone(v));
       },
       set: function (scope, vis, key, value) {
-        if (scope === 'board') store.board[key] = JSON.parse(JSON.stringify(value));
-        else { store[key] = store[key] || {}; store[key][cardId(scope)] = JSON.parse(JSON.stringify(value)); }
+        if (scope === 'board') store.board[key] = clone(value);
+        else { store[key] = store[key] || {}; store[key][cardId(scope)] = clone(value); }
         fire();
         return Promise.resolve();
       },
@@ -507,8 +748,9 @@ body { background: #f1f2f4; padding: 20px; }
       cards: function () { return Promise.resolve(store.cards.slice()); },
       lists: function () { return Promise.resolve(store.lists.slice()); },
       getContext: function () { return { card: 'c1', permissions: { card: 'write', board: 'write' } }; },
+      isMemberSignedIn: function () { return true; },
       sizeTo: function () { return Promise.resolve(); },
-      showCard: function (id) { window.console && console.log('[demo] open card', id); return Promise.resolve(); },
+      showCard: function () { return Promise.resolve(); },
       closePopup: function () { return Promise.resolve(); },
       closeModal: function () { return Promise.resolve(); }
     };
@@ -522,19 +764,22 @@ body { background: #f1f2f4; padding: 20px; }
 </script>
 <script>
 /* Matter Fee Manager — the staged fee schedule on the card back
- * Save strategy: Trello reloads the card-back-section iframe after t.set, so text and
- * amount edits stay local (shown as "unsaved") and are written in one go when:
+ * Save strategy: Trello reloads the card-back-section iframe after t.set, so text and amount edits
+ * stay local (shown as "unsaved") and are written in one go when:
  *   1) a status changes  2) Save is clicked  3) the user clicks outside the schedule (window blur)
+ * Before writing, the stored revision counter is compared with the one loaded; if somebody else
+ * saved in between, nothing is overwritten until the user chooses which version to keep.
  */
 (function () {
   'use strict';
-  var MFM = window.MFM, h = MFM.h;
+  var MFM = window.MFM, h = MFM.h, tr = MFM.tr;
 
   MFM.mountSection = function (t, root) {
-    var state = { v: 1, st: [] };
+    var state = { v: 1, rv: 0, st: [] };
     var cfg = MFM.cfg(null);
-    var dirty = false, saving = false, canWrite = true, errMsg = '', armedDelete = null;
-    var summaryEl, barEl, saveEl, errEl;
+    var loadedRv = 0;
+    var dirty = false, saving = false, canWrite = true, conflict = false, errMsg = '', armedDelete = null;
+    var summaryEl, barEl, saveEl, errEl, rowsEl;
 
     try {
       var ctx = t.getContext() || {};
@@ -549,71 +794,76 @@ body { background: #f1f2f4; padding: 20px; }
         t.get('board', 'shared', MFM.CFG_KEY)
       ]).then(function (r) {
         cfg = MFM.cfg(r[1]);
-        if (!dirty && !saving) state = MFM.normalize(r[0]);
+        if (!MFM.canSee(t)) { MFM.fill(root, [h('div', { class: 'note info', text: tr('no_access') })]); resize(); return; }
+        if (!dirty && !saving) { state = MFM.normalize(r[0]); loadedRv = state.rv || 0; conflict = false; }
         draw();
       });
     }
 
-    function markDirty() {
-      dirty = true;
-      drawSummary();
-      drawSave();
-    }
+    function markDirty() { dirty = true; drawSummary(); drawSave(); }
+    function hasBadInput() { return !!root.querySelector('input.bad'); }
 
-    function hasBadAmount() { return !!root.querySelector('input.bad'); }
-
-    function save() {
+    function save(force) {
       if (!canWrite || saving) return Promise.resolve(false);
-      if (hasBadAmount()) { errMsg = 'An amount is not valid (digits only, up to two decimals). Fix it, then save.'; drawErr(); return Promise.resolve(false); }
-      var payload = MFM.compact(state);
-      if (MFM.sizeOf(payload) > MFM.SIZE_LIMIT) {
-        errMsg = 'This exceeds Trello\'s per-card storage limit (about 4,000 characters). Shorten stage names or use fewer stages.';
-        drawErr();
-        return Promise.resolve(false);
-      }
+      if (hasBadInput()) { errMsg = tr('err_amount'); drawErr(); return Promise.resolve(false); }
       saving = true; errMsg = ''; drawSave(); drawErr();
-      return t.set('card', 'shared', MFM.KEY, payload).then(function () {
-        saving = false; dirty = false; drawSave();
-        return true;
-      }, function (err) {
+      var fail = function (err) {
         saving = false;
-        errMsg = 'Save failed: ' + (err && err.message ? err.message : 'unknown error') + '. Your edits are still on the page; try again.';
+        errMsg = tr('err_save', err && err.message ? err.message : tr('err_unknown'));
         drawSave(); drawErr();
         return false;
-      });
+      };
+      return t.get('card', 'shared', MFM.KEY).then(function (cur) {
+        var curRv = cur && typeof cur.rv === 'number' ? cur.rv : 0;
+        if (!force && curRv !== loadedRv) {      // somebody else saved since we loaded
+          saving = false; conflict = true; drawSave(); drawErr();
+          return false;
+        }
+        var payload = MFM.compact(state);
+        payload.rv = curRv + 1;
+        if (MFM.sizeOf(payload) > MFM.SIZE_LIMIT) {
+          saving = false; errMsg = tr('err_size'); drawSave(); drawErr();
+          return false;
+        }
+        return t.set('card', 'shared', MFM.KEY, payload).then(function () {
+          saving = false; dirty = false; conflict = false; loadedRv = payload.rv; state.rv = payload.rv;
+          drawSave(); drawErr();
+          return true;
+        }, fail);
+      }, fail);
     }
 
-    function revert() { dirty = false; errMsg = ''; load(); }
+    function revert() { dirty = false; conflict = false; errMsg = ''; return load(); }
 
     /* ---------- summary ---------- */
     function drawSummary() {
       var r = MFM.summarize(state);
-      var kids = [];
-      kids.push(h('div', { class: 'tile' }, [
-        h('div', { class: 'k', text: 'Contract total' }),
-        h('div', { class: 'v', text: MFM.fmtMoney(r.total) }),
-        h('div', { class: 'sub', text: r.n + (r.n === 1 ? ' stage' : ' stages') })
-      ]));
-      kids.push(h('div', { class: 'tile' + (r.sum > 0 && r.paid === r.sum ? ' done' : '') }, [
-        h('div', { class: 'k', text: 'Received' }),
-        h('div', { class: 'v', text: MFM.fmtMoney(r.paid) }),
-        h('div', { class: 'sub', text: r.nPaid + ' / ' + r.n + ' stages' })
-      ]));
       var sub = [];
-      if (r.toInvoice > 0) sub.push('To invoice ' + MFM.fmtMoney(r.toInvoice, true));
-      if (r.awaiting > 0) sub.push('Unpaid ' + MFM.fmtMoney(r.awaiting, true));
-      if (r.overdue > 0) sub.push(r.overdueDays + 'd overdue');
-      kids.push(h('div', { class: 'tile' + (r.overdue > 0 ? ' late' : (r.receivable > 0 ? ' hot' : '')) }, [
-        h('div', { class: 'k', text: 'Receivable now' }),
-        h('div', { class: 'v', text: MFM.fmtMoney(r.receivable) }),
-        h('div', { class: 'sub', text: sub.join(' · ') || 'Nothing due right now' })
-      ]));
-      kids.push(h('div', { class: 'tile' }, [
-        h('div', { class: 'k', text: 'Not yet due' }),
-        h('div', { class: 'v', text: MFM.fmtMoney(r.notDue) }),
-        h('div', { class: 'sub', text: 'Work not done yet' })
-      ]));
-      MFM.fill(summaryEl, kids);
+      if (r.toInvoice > 0) sub.push(tr('sub_toinv', MFM.fmtMoney(r.toInvoice, true)));
+      if (r.awaiting > 0) sub.push(tr('sub_unpaid', MFM.fmtMoney(r.awaiting, true)));
+      if (r.overdue > 0) sub.push(tr('sub_over', r.overdueDays));
+      MFM.fill(summaryEl, [
+        h('div', { class: 'tile' }, [
+          h('div', { class: 'k', text: tr('k_total') }),
+          h('div', { class: 'v', text: MFM.fmtMoney(r.total) }),
+          h('div', { class: 'sub', text: tr('n_stages', r.n) })
+        ]),
+        h('div', { class: 'tile' + (r.sum > 0 && r.paid === r.sum ? ' done' : '') }, [
+          h('div', { class: 'k', text: tr('k_recv') }),
+          h('div', { class: 'v', text: MFM.fmtMoney(r.paid) }),
+          h('div', { class: 'sub', text: tr('n_of_stages', r.nPaid, r.n) })
+        ]),
+        h('div', { class: 'tile' + (r.overdue > 0 ? ' late' : (r.receivable > 0 ? ' hot' : '')) }, [
+          h('div', { class: 'k', text: tr('k_now') }),
+          h('div', { class: 'v', text: MFM.fmtMoney(r.receivable) }),
+          h('div', { class: 'sub', text: sub.join(' · ') || tr('sub_none') })
+        ]),
+        h('div', { class: 'tile' }, [
+          h('div', { class: 'k', text: tr('k_notdue') }),
+          h('div', { class: 'v', text: MFM.fmtMoney(r.notDue) }),
+          h('div', { class: 'sub', text: tr('sub_notdone') })
+        ])
+      ]);
 
       var base = r.sum > 0 ? r.sum : 1;
       var pct = function (v) { return 'width:' + (v / base * 100).toFixed(2) + '%'; };
@@ -625,16 +875,15 @@ body { background: #f1f2f4; padding: 20px; }
           h('i', { class: 't', style: pct(r.toInvoice) })
         ]),
         h('div', { class: 'legend' }, [
-          h('span', { class: 'p', text: 'Received' }),
-          h('span', { class: 'l', text: 'Overdue' }),
-          h('span', { class: 'w', text: 'Invoiced, unpaid' }),
-          h('span', { class: 't', text: 'Done, to invoice' }),
-          h('span', { text: 'Not yet due' })
+          h('span', { class: 'p', text: tr('lg_recv') }),
+          h('span', { class: 'l', text: tr('lg_over') }),
+          h('span', { class: 'w', text: tr('lg_inv') }),
+          h('span', { class: 't', text: tr('lg_done') }),
+          h('span', { text: tr('lg_notdue') })
         ]),
         r.mismatch ? h('div', {
           class: 'note warn',
-          text: 'Stages add up to ' + MFM.fmtMoney(r.sum) + ' ≠ contract total ' + MFM.fmtMoney(r.contract) +
-            ' (difference ' + MFM.fmtMoney(Math.abs(r.contract - r.sum)) + '). Check the stage amounts or the contract total.'
+          text: tr('mismatch', MFM.fmtMoney(r.sum), MFM.fmtMoney(r.contract), MFM.fmtMoney(Math.abs(r.contract - r.sum)))
         }) : null
       ]);
       resize();
@@ -642,22 +891,31 @@ body { background: #f1f2f4; padding: 20px; }
 
     function drawSave() {
       if (!saveEl) return;
-      if (!canWrite) { MFM.fill(saveEl, [h('span', { class: 'state', text: 'Read-only (you cannot edit this card)' })]); return; }
-      if (saving) { MFM.fill(saveEl, [h('span', { class: 'state', text: 'Saving…' })]); return; }
+      if (!canWrite) { MFM.fill(saveEl, [h('span', { class: 'state', text: tr('ro') })]); return; }
+      if (saving) { MFM.fill(saveEl, [h('span', { class: 'state', text: tr('saving') })]); return; }
       if (dirty) {
         MFM.fill(saveEl, [
-          h('span', { class: 'state dirty', text: 'Unsaved changes' }),
-          h('button', { text: 'Discard', onclick: revert }),
-          h('button', { class: 'primary', text: 'Save', onclick: function () { save(); } })
+          h('span', { class: 'state dirty', text: tr('unsaved') }),
+          h('button', { text: tr('discard'), onclick: revert }),
+          h('button', { class: 'primary', text: tr('save'), onclick: function () { save(); } })
         ]);
       } else {
-        MFM.fill(saveEl, [h('span', { class: 'state', text: 'Saved' })]);
+        MFM.fill(saveEl, [h('span', { class: 'state', text: tr('saved') })]);
       }
     }
 
     function drawErr() {
       if (!errEl) return;
-      MFM.fill(errEl, [errMsg ? h('div', { class: 'note err', text: errMsg }) : null]);
+      MFM.fill(errEl, [
+        conflict ? h('div', { class: 'note err' }, [
+          h('div', { text: tr('err_conflict') }),
+          h('div', { class: 'foot' }, [
+            h('button', { text: tr('btn_reload'), onclick: revert }),
+            h('button', { text: tr('btn_overwrite'), onclick: function () { save(true); } })
+          ])
+        ]) : null,
+        errMsg ? h('div', { class: 'note err', text: errMsg }) : null
+      ]);
       resize();
     }
 
@@ -667,7 +925,7 @@ body { background: #f1f2f4; padding: 20px; }
       var dis = !canWrite;
 
       var name = h('input', {
-        type: 'text', class: 'name', value: s.n, placeholder: 'Stage name (e.g. Application lodged)', maxlength: '60', disabled: dis,
+        type: 'text', class: 'name', value: s.n, placeholder: tr('ph_stage'), maxlength: '60', disabled: dis,
         oninput: function () { s.n = name.value; markDirty(); }
       });
       var amt = h('input', {
@@ -676,7 +934,9 @@ body { background: #f1f2f4; padding: 20px; }
           var c = MFM.parseMoney(amt.value);
           if (c === null) { amt.classList.add('bad'); dirty = true; drawSave(); return; }
           amt.classList.remove('bad');
-          s.a = c; markDirty();
+          s.a = c;
+          if (s.r && s.r > s.a) s.r = s.a;
+          markDirty();
         },
         onblur: function () { if (!amt.classList.contains('bad')) amt.value = MFM.moneyInput(s.a); }
       });
@@ -688,31 +948,53 @@ body { background: #f1f2f4; padding: 20px; }
           draw();
           save(); // a status change saves immediately
         }
-      }, MFM.STATUS.map(function (st) {
-        var o = h('option', { value: String(st.id), text: st.label });
-        if (st.id === s.s) o.selected = true;
+      }, [0, 1, 2, 3].map(function (id) {
+        var o = h('option', { value: String(id), text: MFM.statusLabel(id) });
+        if (id === s.s) o.selected = true;
         return o;
       }));
       var inv = h('input', {
-        type: 'text', value: s.inv || '', placeholder: 'Invoice no.', maxlength: '24', disabled: dis,
+        type: 'text', class: 'inv', value: s.inv || '', placeholder: tr('ph_inv'), maxlength: '24', disabled: dis,
         oninput: function () { if (inv.value.trim()) s.inv = inv.value.trim(); else delete s.inv; markDirty(); }
       });
 
-      // date field: paid stages show the date paid, others the payment due date (auto-filled from the terms on invoicing)
+      // date field: paid stages show the date paid, others the payment due date
       var dateKey = s.s === 3 ? 'pd' : 'd';
       var date = h('input', {
         type: 'date', value: s[dateKey] || '', disabled: dis || s.s < 2,
-        title: s.s === 3 ? 'Date paid' : 'Payment due date (applies once invoiced)',
+        title: s.s === 3 ? tr('ti_paid') : tr('ti_due'),
         onchange: function () { if (date.value) s[dateKey] = date.value; else delete s[dateKey]; markDirty(); drawRows(); }
       });
 
+      // part payment: only meaningful while the stage is invoiced and unpaid
+      var recv = null;
+      if (s.s === 2) {
+        var rin = h('input', {
+          type: 'text', class: 'amt', inputmode: 'decimal', placeholder: '0.00', disabled: dis,
+          value: s.r ? MFM.moneyInput(s.r) : '', title: tr('ti_recv'),
+          oninput: function () {
+            var c = MFM.parseMoney(rin.value);
+            if (c === null || c > s.a) {
+              rin.classList.add('bad'); dirty = true; drawSave();
+              if (c !== null) { errMsg = tr('err_recv'); drawErr(); }
+              return;
+            }
+            rin.classList.remove('bad');
+            if (errMsg) { errMsg = ''; drawErr(); }
+            if (c > 0) s.r = c; else delete s.r;
+            markDirty();
+          }
+        });
+        recv = h('label', { class: 'dl rv' }, [h('span', { text: tr('l_recv') }), rin]);
+      }
+
       var del;
       if (armedDelete === s.i) {
-        del = h('button', { class: 'danger', text: 'Confirm delete', disabled: dis, onclick: function () {
+        del = h('button', { class: 'danger', text: tr('confirm_del'), disabled: dis, onclick: function () {
           state.st.splice(idx, 1); armedDelete = null; dirty = true; draw();
         } });
       } else {
-        del = h('button', { class: 'icon', text: '✕', title: 'Delete this stage', disabled: dis, onclick: function () { armedDelete = s.i; drawRows(); } });
+        del = h('button', { class: 'icon', text: '✕', title: tr('ti_del'), disabled: dis, onclick: function () { armedDelete = s.i; drawRows(); } });
       }
       var move = function (d) {
         return function () {
@@ -724,47 +1006,44 @@ body { background: #f1f2f4; padding: 20px; }
       };
 
       var dates = [];
-      if (s.dd) dates.push('Done ' + MFM.fmtDate(s.dd));
-      if (s.bd) dates.push('Invoiced ' + MFM.fmtDate(s.bd));
+      if (s.dd) dates.push(tr('d_done', MFM.fmtDate(s.dd)));
+      if (s.bd) dates.push(tr('d_inv', MFM.fmtDate(s.bd)));
+      var hint = (s.s === 2 && s.r ? tr('note_part', MFM.fmtMoney(s.r, true)) + ' · ' : '') + note.text;
 
       return h('div', { class: 'stage' + (s.s === 3 ? ' paid' : '') }, [
-        h('div', { class: 'l1' }, [
-          h('span', { class: 'idx', text: String(idx + 1) }),
-          name, amt, sel
-        ]),
+        h('div', { class: 'l1' }, [h('span', { class: 'idx', text: String(idx + 1) }), name, amt, sel]),
         h('div', { class: 'l2' }, [
           h('span', { class: 'idx' }),
           inv,
-          h('label', { class: 'dl' }, [h('span', { text: s.s === 3 ? 'Paid' : 'Due' }), date]),
+          h('label', { class: 'dl' }, [h('span', { text: s.s === 3 ? tr('l_paid') : tr('l_due') }), date]),
+          recv,
           h('span', { class: 'hint ' + (note.kind === 'warn' ? 'warn' : note.kind === 'late' ? 'late' : note.kind === 'ok' ? 'ok' : ''),
-            text: note.text, title: dates.join(' · ') }),
+            text: hint, title: dates.join(' · ') }),
           h('span', { class: 'acts' }, [
-            h('button', { class: 'icon', text: '↑', title: 'Move up', disabled: dis || idx === 0, onclick: move(-1) }),
-            h('button', { class: 'icon', text: '↓', title: 'Move down', disabled: dis || idx === state.st.length - 1, onclick: move(1) }),
+            h('button', { class: 'icon', text: '↑', title: tr('up'), disabled: dis || idx === 0, onclick: move(-1) }),
+            h('button', { class: 'icon', text: '↓', title: tr('down'), disabled: dis || idx === state.st.length - 1, onclick: move(1) }),
             del
           ])
         ])
       ]);
     }
 
-    var rowsEl;
     function drawRows() {
       if (!state.st.length) {
-        var kids = [h('div', { text: 'No fee stages yet.' })];
+        var kids = [h('div', { text: tr('empty') })];
         if (canWrite) {
-          var btns = cfg.tpls.map(function (tpl) {
-            return h('button', { text: 'Use template: ' + tpl.n, onclick: function () {
+          kids.push(h('div', { class: 'foot', style: 'justify-content:center' }, cfg.tpls.map(function (tpl) {
+            return h('button', { text: tr('use_tpl', tpl.n), onclick: function () {
               state.st = MFM.fromTemplate(tpl).st; dirty = true; draw();
             } });
-          });
-          kids.push(h('div', { class: 'foot', style: 'justify-content:center' }, btns));
+          })));
         }
         MFM.fill(rowsEl, [h('div', { class: 'empty' }, kids)]);
       } else {
         MFM.fill(rowsEl, [
           h('div', { class: 'stage head' }, [h('div', { class: 'l1' }, [
-            h('span', { class: 'idx', text: '#' }), h('span', { text: 'Stage' }),
-            h('span', { class: 'num', text: 'Inc. GST ($)' }), h('span', { text: 'Status' })
+            h('span', { class: 'idx', text: '#' }), h('span', { text: tr('h_stage') }),
+            h('span', { class: 'num', text: tr('h_amount') + ' (' + MFM.cur + ')' }), h('span', { text: tr('h_status') })
           ])])
         ].concat(state.st.map(stageRow)));
       }
@@ -779,7 +1058,7 @@ body { background: #f1f2f4; padding: 20px; }
       errEl = h('div');
 
       var contract = h('input', {
-        type: 'text', class: 'amt', inputmode: 'decimal', placeholder: 'optional', disabled: !canWrite,
+        type: 'text', class: 'amt', inputmode: 'decimal', placeholder: tr('optional'), disabled: !canWrite,
         value: state.c ? MFM.moneyInput(state.c) : '',
         oninput: function () {
           var c = MFM.parseMoney(contract.value);
@@ -791,15 +1070,15 @@ body { background: #f1f2f4; padding: 20px; }
       });
 
       MFM.fill(root, [
-        MFM.demo ? h('div', { class: 'demo-banner', text: 'Demo mode: not connected to Trello. The data is fictional and resets on refresh.' }) : null,
+        MFM.demo ? h('div', { class: 'demo-banner', text: tr('demo') }) : null,
         summaryEl, barEl, rowsEl, errEl,
         h('div', { class: 'foot' }, [
-          h('button', { text: '+ Add stage', disabled: !canWrite, onclick: function () {
+          h('button', { text: tr('add_stage'), disabled: !canWrite, onclick: function () {
             state.st.push(MFM.newStage('', 0)); dirty = true; draw();
             var names = root.querySelectorAll('input.name');
             if (names.length) names[names.length - 1].focus();
           } }),
-          h('label', {}, [h('span', { text: 'Contract total (for cross-check)' }), contract]),
+          h('label', {}, [h('span', { text: tr('contract') }), contract]),
           h('span', { class: 'grow' }),
           saveEl
         ])
@@ -807,8 +1086,8 @@ body { background: #f1f2f4; padding: 20px; }
       drawSummary(); drawRows(); drawSave(); drawErr();
     }
 
-    // auto-save when the user clicks outside the schedule, so closing the card without pressing Save does not lose edits
-    window.addEventListener('blur', function () { if (dirty && !saving) save(); });
+    // auto-save when the user clicks outside the schedule, so closing the card without pressing Save keeps the edits
+    window.addEventListener('blur', function () { if (dirty && !saving && !conflict) save(); });
 
     return t.render(load);
   };
@@ -819,11 +1098,37 @@ body { background: #f1f2f4; padding: 20px; }
 /* Matter Fee Manager — board-level receivables overview (modal opened from the board button) */
 (function () {
   'use strict';
-  var MFM = window.MFM, h = MFM.h;
+  var MFM = window.MFM, h = MFM.h, tr = MFM.tr;
+
+  function csvCell(v) {
+    var s = String(v === undefined || v === null ? '' : v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s;           // stop spreadsheet apps treating text as a formula
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  MFM.toCsv = function (rows) {
+    var lines = [tr('csv_head')];
+    rows.forEach(function (x) {
+      if (!x.fee) return;
+      x.fee.st.forEach(function (s) {
+        var owing = s.s === 3 ? 0 : MFM.owing(s);
+        lines.push([
+          x.card.name, x.list, s.n, MFM.moneyInput(s.a), MFM.moneyInput(s.a - owing), MFM.moneyInput(owing),
+          MFM.statusLabel(s.s), s.inv || '', s.d || '', s.pd || '', s.dd || '', s.bd || ''
+        ].map(csvCell).join(','));
+      });
+    });
+    return lines.join('\n');
+  };
 
   MFM.mountOverview = function (t, root) {
+    var showCsv = false, copied = false, lastRows = [];
+
     function load() {
-      return Promise.all([t.cards('id', 'name', 'idList'), t.lists('id', 'name')]).then(function (r) {
+      return Promise.all([
+        t.cards('id', 'name', 'idList'), t.lists('id', 'name'), t.get('board', 'shared', MFM.CFG_KEY)
+      ]).then(function (r) {
+        MFM.cfg(r[2]);
+        if (!MFM.canSee(t)) { lastRows = []; MFM.fill(root, [h('div', { class: 'note info', text: tr('no_access') })]); return null; }
         var cards = r[0] || [], lists = {};
         (r[1] || []).forEach(function (l) { lists[l.id] = l.name; });
         return Promise.all(cards.map(function (c) {
@@ -833,15 +1138,33 @@ body { background: #f1f2f4; padding: 20px; }
             return { card: c, list: lists[c.idList] || '', fee: null };
           });
         }));
-      }).then(draw, function (err) {
-        MFM.fill(root, [h('div', { class: 'note err', text: 'Could not read board data: ' + (err && err.message ? err.message : 'unknown error') })]);
+      }).then(function (rows) { if (rows) { lastRows = rows; draw(rows); } }, function (err) {
+        MFM.fill(root, [h('div', { class: 'note err', text: tr('err_read', err && err.message ? err.message : tr('err_unknown')) })]);
       });
     }
 
     function cardLink(card) {
-      return h('a', { class: 'link', text: card.name, title: 'Open card', onclick: function () {
+      return h('a', { class: 'link', text: card.name, title: tr('open_card'), onclick: function () {
         Promise.resolve(t.showCard(card.id)).then(function () { return t.closeModal(); }, function () { /* ignore */ });
       } });
+    }
+
+    function csvPanel(rows) {
+      var area = h('textarea', { readonly: true, class: 'csv' });
+      area.value = MFM.toCsv(rows);
+      var copyBtn = h('button', { class: 'primary', text: copied ? tr('copied') : tr('copy'), onclick: function () {
+        area.focus(); area.select();
+        var done = function () { copied = true; copyBtn.textContent = tr('copied'); };
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(area.value).then(done, function () { if (document.execCommand('copy')) done(); });
+          else if (document.execCommand('copy')) done();
+        } catch (e) { /* the text stays selected so it can be copied by hand */ }
+      } });
+      return h('div', { class: 'csvbox' }, [
+        h('div', { class: 'muted', text: tr('export_hint') }),
+        area,
+        h('div', { class: 'foot' }, [h('span', { class: 'grow' }), h('button', { text: tr('close'), onclick: function () { showCsv = false; copied = false; draw(lastRows); } }), copyBtn])
+      ]);
     }
 
     function draw(rows) {
@@ -856,6 +1179,7 @@ body { background: #f1f2f4; padding: 20px; }
         tot.overdue += x.sum.overdue; tot.outstanding += x.sum.outstanding; tot.paid += x.sum.paid;
         x.fee.st.forEach(function (s) {
           if (s.s !== 1 && s.s !== 2) return;
+          if (MFM.owing(s) <= 0) return;
           var note = MFM.stageNote(s, today);
           // sort: overdue (most days first) > to invoice (longest wait first) > not yet due (soonest first)
           var rank = note.kind === 'late' ? 3e6 + note.days : (s.s === 1 ? 2e6 + note.days : 1e6 + note.days);
@@ -864,41 +1188,34 @@ body { background: #f1f2f4; padding: 20px; }
       });
       todo.sort(function (a, b) { return b.rank - a.rank; });
 
+      var tile = function (cls, k, v, sub) {
+        return h('div', { class: 'tile' + cls }, [h('div', { class: 'k', text: k }), h('div', { class: 'v', text: MFM.fmtMoney(v) }), h('div', { class: 'sub', text: sub })]);
+      };
       var tiles = h('div', { class: 'tiles five' }, [
-        h('div', { class: 'tile' + (tot.overdue > 0 ? ' late' : '') }, [
-          h('div', { class: 'k', text: 'Overdue' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.overdue) }),
-          h('div', { class: 'sub', text: 'Past the due date' })]),
-        h('div', { class: 'tile' + (tot.awaiting - tot.overdue > 0 ? ' hot' : '') }, [
-          h('div', { class: 'k', text: 'Invoiced, unpaid' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.awaiting - tot.overdue) }),
-          h('div', { class: 'sub', text: 'Not yet due' })]),
-        h('div', { class: 'tile' + (tot.toInvoice > 0 ? ' hot' : '') }, [
-          h('div', { class: 'k', text: 'Done, to invoice' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.toInvoice) }),
-          h('div', { class: 'sub', text: 'Time to bill' })]),
-        h('div', { class: 'tile' }, [
-          h('div', { class: 'k', text: 'Contract balance' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.outstanding) }),
-          h('div', { class: 'sub', text: 'Incl. stages not started' })]),
-        h('div', { class: 'tile' }, [
-          h('div', { class: 'k', text: 'Total received' }), h('div', { class: 'v', text: MFM.fmtMoney(tot.paid) }),
-          h('div', { class: 'sub', text: withFee.length + ' matter(s) with a schedule' })])
+        tile(tot.overdue > 0 ? ' late' : '', tr('t_over'), tot.overdue, tr('t_over_sub')),
+        tile(tot.awaiting - tot.overdue > 0 ? ' hot' : '', tr('t_inv'), tot.awaiting - tot.overdue, tr('t_inv_sub')),
+        tile(tot.toInvoice > 0 ? ' hot' : '', tr('t_done'), tot.toInvoice, tr('t_done_sub')),
+        tile('', tr('t_bal'), tot.outstanding, tr('t_bal_sub')),
+        tile('', tr('t_recv'), tot.paid, tr('t_recv_sub', withFee.length))
       ]);
 
       var todoTable;
       if (!todo.length) {
-        todoTable = h('div', { class: 'empty', text: 'Nothing to invoice or chase right now.' });
+        todoTable = h('div', { class: 'empty', text: tr('none_todo') });
       } else {
         todoTable = h('table', {}, [
           h('thead', {}, [h('tr', {}, [
-            h('th', { text: 'Matter (card)' }), h('th', { text: 'List' }), h('th', { text: 'Stage' }),
-            h('th', { class: 'num', text: 'Amount' }), h('th', { text: 'Status' }), h('th', { text: 'Invoice no.' }), h('th', { text: 'Timing' })
+            h('th', { text: tr('c_matter') }), h('th', { text: tr('c_list') }), h('th', { text: tr('c_stage') }),
+            h('th', { class: 'num', text: tr('c_amount') }), h('th', { text: tr('c_status') }), h('th', { text: tr('c_inv') }), h('th', { text: tr('c_timing') })
           ])]),
           h('tbody', {}, todo.map(function (it) {
-            var late = it.note.kind === 'late';
+            var late = it.note.kind === 'late', owing = MFM.owing(it.s);
             return h('tr', {}, [
               h('td', {}, [cardLink(it.x.card)]),
               h('td', { class: 'muted', text: it.x.list }),
-              h('td', { text: it.s.n || '(unnamed stage)' }),
-              h('td', { class: 'num', text: MFM.fmtMoney(it.s.a) }),
-              h('td', {}, [h('span', { class: 'pill ' + (late ? 'late' : 's' + it.s.s), text: late ? 'Overdue' : MFM.STATUS[it.s.s].label })]),
+              h('td', { text: it.s.n || tr('unnamed') }),
+              h('td', { class: 'num' }, [MFM.fmtMoney(owing), owing !== it.s.a ? h('div', { class: 'hint', text: tr('of_amount', MFM.fmtMoney(it.s.a, true)) }) : null]),
+              h('td', {}, [h('span', { class: 'pill ' + (late ? 'late' : 's' + it.s.s), text: late ? tr('t_over') : MFM.statusLabel(it.s.s) })]),
               h('td', { class: 'muted', text: it.s.inv || '—' }),
               h('td', { class: 'hint ' + (late ? 'late' : it.s.s === 1 ? 'warn' : ''), text: it.note.text })
             ]);
@@ -908,17 +1225,17 @@ body { background: #f1f2f4; padding: 20px; }
 
       withFee.sort(function (a, b) { return (b.sum.receivable - a.sum.receivable) || (b.sum.outstanding - a.sum.outstanding); });
       var allTable = !withFee.length
-        ? h('div', { class: 'empty', text: 'No card on this board has a fee schedule yet. Open a card → click the "Fee schedule" button to create one.' })
+        ? h('div', { class: 'empty', text: tr('none_all') })
         : h('table', {}, [
           h('thead', {}, [h('tr', {}, [
-            h('th', { text: 'Matter (card)' }), h('th', { class: 'num', text: 'Contract total' }), h('th', { class: 'num', text: 'Received' }),
-            h('th', { class: 'num', text: 'Receivable now' }), h('th', { class: 'num', text: 'Not yet due' }), h('th', { text: 'Progress' })
+            h('th', { text: tr('c_matter') }), h('th', { class: 'num', text: tr('c_total') }), h('th', { class: 'num', text: tr('c_received') }),
+            h('th', { class: 'num', text: tr('c_now') }), h('th', { class: 'num', text: tr('c_notdue') }), h('th', { text: tr('c_prog') })
           ])]),
           h('tbody', {}, withFee.map(function (x) {
             var r = x.sum, base = r.sum > 0 ? r.sum : 1;
             var w = function (v) { return 'width:' + (v / base * 100).toFixed(1) + '%'; };
             return h('tr', {}, [
-              h('td', {}, [cardLink(x.card), r.mismatch ? h('div', { class: 'hint warn', text: 'Stages ≠ contract total' }) : null]),
+              h('td', {}, [cardLink(x.card), r.mismatch ? h('div', { class: 'hint warn', text: tr('mismatch_short') }) : null]),
               h('td', { class: 'num', text: MFM.fmtMoney(r.total) }),
               h('td', { class: 'num', text: MFM.fmtMoney(r.paid) }),
               h('td', { class: 'num', text: MFM.fmtMoney(r.receivable), style: r.overdue > 0 ? 'color:var(--red);font-weight:600' : (r.receivable > 0 ? 'color:var(--orange);font-weight:600' : '') }),
@@ -937,13 +1254,17 @@ body { background: #f1f2f4; padding: 20px; }
         ]);
 
       MFM.fill(root, [
-        MFM.demo ? h('div', { class: 'demo-banner', text: 'Demo mode: fictional data.' }) : null,
+        MFM.demo ? h('div', { class: 'demo-banner', text: tr('demo_short') }) : null,
         tiles,
-        h('h2', {}, ['Needs follow-up', h('small', { text: todo.length + ' stage(s) · overdue → to invoice → not yet due' })]),
+        h('h2', {}, [tr('h_todo'), h('small', { text: tr('h_todo_sub', todo.length) })]),
         todoTable,
-        h('h2', {}, ['All matters', h('small', { text: 'sorted by amount receivable now' })]),
+        h('div', { class: 'h2row' }, [
+          h('h2', {}, [tr('h_all'), h('small', { text: tr('h_all_sub') })]),
+          withFee.length && !showCsv ? h('button', { text: tr('export'), onclick: function () { showCsv = true; draw(lastRows); } }) : null
+        ]),
+        showCsv ? csvPanel(withFee) : null,
         allTable,
-        h('div', { class: 'note info', text: 'Figures come from each card\'s fee schedule (as at ' + MFM.fmtDate(today) + ', archived cards excluded). Amounts are entered by hand and are not accounting or trust records.' })
+        h('div', { class: 'note info', text: tr('footnote', MFM.fmtDate(today)) })
       ]);
     }
 
@@ -953,17 +1274,119 @@ body { background: #f1f2f4; padding: 20px; }
 
 </script>
 <script>
+/* Matter Fee Manager — board settings (Power-Up gear → Settings) */
+(function () {
+  'use strict';
+  var MFM = window.MFM, h = MFM.h, tr = MFM.tr;
+
+  MFM.mountSettings = function (t, root) {
+    var cfg, msg = null;
+    var drafts = []; // [{name, text}]
+
+    function resize() { try { t.sizeTo('#' + root.id); } catch (e) { /* demo mode */ } }
+
+    function draw() {
+      MFM.useCfg(cfg);
+
+      var lang = h('select', { style: 'max-width:280px', onchange: function () { cfg.lang = lang.value; draw(); } },
+        [['auto', tr('s_lang_auto')], ['en', 'English'], ['zh', '简体中文']].map(function (o) {
+          var el = h('option', { value: o[0], text: o[1] });
+          if (cfg.lang === o[0]) el.selected = true;
+          return el;
+        }));
+      var cur = h('input', { type: 'text', value: cfg.cur, maxlength: '4', style: 'width:90px',
+        oninput: function () { cfg.cur = cur.value.trim() || '$'; } });
+      var terms = h('input', { type: 'number', min: '0', max: '365', value: String(cfg.terms), style: 'width:90px',
+        oninput: function () { var v = parseInt(terms.value, 10); if (isFinite(v) && v >= 0) cfg.terms = v; } });
+
+      var tplEls = drafts.map(function (d, i) {
+        var name = h('input', { type: 'text', value: d.name, placeholder: tr('ph_tpl_name'), maxlength: '40',
+          oninput: function () { d.name = name.value; } });
+        var text = h('textarea', { placeholder: tr('ph_tpl_lines'), oninput: function () { d.text = text.value; } });
+        text.value = d.text;
+        return h('div', { class: 'tpl' }, [
+          h('div', { class: 'row' }, [name, h('button', { class: 'icon', text: '✕', title: tr('del_tpl'), onclick: function () { drafts.splice(i, 1); draw(); } })]),
+          text
+        ]);
+      });
+
+      MFM.fill(root, [
+        h('div', { class: 'field' }, [h('label', { text: tr('s_lang') }), lang]),
+        h('div', { class: 'field two' }, [
+          h('div', {}, [h('label', { text: tr('s_cur') }), cur]),
+          h('div', {}, [h('label', { text: tr('s_terms') }), terms, h('span', { class: 'muted', text: tr('s_days') })])
+        ]),
+        h('div', { class: 'field' }, [h('label', { text: tr('s_tpls') })].concat(tplEls).concat([
+          h('button', { text: tr('new_tpl'), onclick: function () { drafts.push({ name: '', text: '' }); draw(); } })
+        ])),
+        msg ? h('div', { class: 'note ' + msg.kind, text: msg.text }) : null,
+        h('div', { class: 'foot' }, [
+          h('span', { class: 'muted small' }, [
+            tr('about', MFM.VERSION) + ' ',
+            h('a', { class: 'link', href: './privacy.html', target: '_blank', rel: 'noopener', text: tr('privacy') }), ' · ',
+            h('a', { class: 'link', href: './support.html', target: '_blank', rel: 'noopener', text: tr('support') })
+          ]),
+          h('span', { class: 'grow' }),
+          h('button', { class: 'primary', text: tr('save_settings'), onclick: save })
+        ])
+      ]);
+      resize();
+    }
+
+    function save() {
+      var out = { lang: cfg.lang, cur: cfg.cur, terms: cfg.terms, tpls: [] }, problems = [];
+      drafts.forEach(function (d, i) {
+        var name = d.name.trim();
+        var parsed = MFM.parseTemplateLines(d.text);
+        if (!name && !d.text.trim()) return; // ignore empty templates
+        if (!name) problems.push(tr('e_noname', i + 1));
+        if (parsed.badLines.length) problems.push(tr('e_badline', name || tr('e_tplname', i + 1), parsed.badLines.join(', ')));
+        out.tpls.push({ n: name, st: parsed.stages });
+      });
+      if (problems.length) { msg = { kind: 'err', text: problems.join('; ') }; draw(); return; }
+      if (MFM.sizeOf(out) > MFM.SIZE_LIMIT) { msg = { kind: 'err', text: tr('e_size') }; draw(); return; }
+      t.set('board', 'shared', MFM.CFG_KEY, out).then(function () {
+        msg = { kind: 'info', text: tr('saved') }; draw();
+        return t.closePopup();
+      }, function (err) {
+        msg = { kind: 'err', text: tr('err_save', err && err.message ? err.message : tr('err_unknown')) }; draw();
+      });
+    }
+
+    return t.get('board', 'shared', MFM.CFG_KEY).then(function (raw) {
+      cfg = MFM.cfg(raw);
+      drafts = cfg.tpls.map(function (tpl) { return { name: tpl.n, text: MFM.templateToText(tpl) }; });
+      draw();
+    });
+  };
+})();
+
+</script>
+<script>
 (function () {
   var t = MFM.getT();
+  document.getElementById('ver').textContent = MFM.VERSION;
   MFM.mountSection(t, document.getElementById('mfm-section'));
   MFM.mountOverview(t, document.getElementById('mfm-overview'));
+  MFM.mountSettings(t, document.getElementById('mfm-settings'));
   t.render(function () {
-    return t.get('card', 'shared', MFM.KEY).then(function (fee) {
-      MFM.fill(document.getElementById('demo-badges'), MFM.badges(fee).map(function (b) {
+    return Promise.all([t.get('card', 'shared', MFM.KEY), t.get('board', 'shared', MFM.CFG_KEY)]).then(function (r) {
+      MFM.cfg(r[1]);
+      document.getElementById('demo-name').textContent = t._store.cards[0].name;
+      document.getElementById('demo-sec').textContent = MFM.tr('sec_title');
+      MFM.fill(document.getElementById('demo-badges'), MFM.badges(r[0]).map(function (b) {
         return MFM.h('span', { class: 'bdg ' + (b.color || ''), text: b.text });
       }));
     });
   });
+  function setLang(l) {
+    t.get('board', 'shared', MFM.CFG_KEY).then(function (raw) {
+      var c = MFM.cfg(raw); c.lang = l;
+      return t.set('board', 'shared', MFM.CFG_KEY, c);
+    }).then(function () { MFM.mountSettings(t, document.getElementById('mfm-settings')); });
+  }
+  document.getElementById('lang-en').onclick = function () { setLang('en'); };
+  document.getElementById('lang-zh').onclick = function () { setLang('zh'); };
 })();
 </script>
 </body>
