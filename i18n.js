@@ -179,6 +179,16 @@
   add('privacy', 'Privacy', '隐私政策');
   add('support', 'Help & support', '帮助与支持');
 
+  // welcome (shown once when the Power-Up is enabled on a board)
+  add('wel_title', 'Welcome to Matter Fee Manager', '欢迎使用 Matter Fee Manager');
+  add('wel_intro', 'Track fixed-fee work in billing stages, and see what to invoice and what is overdue.', '把固定收费的工作拆成收费阶段，随时看到该开票和已逾期的款项。');
+  add('wel_1', 'Open a card, click the Power-Ups (rocket) button below it, then "Fee schedule" to create a schedule.', '打开一张卡片，点卡片下方的 Power-Ups（火箭）按钮，再点「收费表」新建。');
+  add('wel_2', 'Move each stage along: Not started → Done · to invoice → Invoiced · unpaid → Paid. Badges on the card front update as you go.', '逐步推进每个阶段：未开始 → 已完成·待开票 → 已开票·待付款 → 已收款。卡片正面的徽章会随之更新。');
+  add('wel_3', 'Use "Receivables" at the top of the board for everything that needs invoicing or chasing.', '看板顶部的「应收总览」列出所有需要开票或催款的阶段。');
+  add('wel_data', 'Your data stays on this Trello board. There is no external server and no account to create. Fee figures are shown only to board members with edit access; do not use this on public boards for confidential figures.', '数据只保存在这个 Trello 看板里，没有外部服务器，也不需要注册账号。收费数字仅对有编辑权限的看板成员显示；涉及保密数字时不要用在公开看板上。');
+  add('wel_set', 'Language, currency symbol, payment terms and templates are under this Power-Up\'s Settings.', '语言、货币符号、付款期限和模板，都在本 Power-Up 的「设置」里。');
+  add('wel_ok', 'Got it', '知道了');
+
   root.MFM_STR = STR;
   if (typeof module !== 'undefined' && module.exports) module.exports = STR;
 })(typeof window !== 'undefined' ? window : globalThis);

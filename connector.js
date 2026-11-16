@@ -123,6 +123,13 @@
       });
     },
 
+    // Shown once, right after someone enables the Power-Up on a board.
+    'on-enable': function (t) {
+      return withCfg(t).then(function () {
+        return t.modal({ url: './welcome.html', title: tr('wel_title'), height: 430, fullscreen: false });
+      });
+    },
+
     'show-settings': function (t) {
       return withCfg(t).then(function () {
         return t.popup({ title: tr('set_title'), url: './settings.html', height: 560 });

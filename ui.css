@@ -162,3 +162,7 @@ a.link[href] { cursor: pointer; }
 .doc h1 { font-size: 24px; margin: 0 0 4px; } .doc h2 { font-size: 17px; margin: 26px 0 6px; }
 .doc p, .doc li { color: var(--fg); } .doc .muted { font-size: 13px; }
 .doc code { background: var(--panel); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+/* welcome modal */
+.lead { font-size: 15px; margin: 0 0 10px; }
+ol.steps { margin: 0 0 12px; padding-left: 22px; }
+ol.steps li { margin-bottom: 8px; line-height: 1.5; }

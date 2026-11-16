@@ -33,18 +33,19 @@ Trello limits Power-Up storage to 4096 characters per card, which is roughly 20 
 | `section.html`, `section.js` | The fee schedule on the card back |
 | `overview.html`, `overview.js` | Receivables overview modal |
 | `settings.html`, `settings.js` | Board settings |
+| `welcome.html`, `welcome.js` | Getting-started modal shown when the Power-Up is enabled |
 | `shared.js` | Money, dates, statuses, totals, badges, access rule |
 | `i18n.js` | All interface strings, English and Chinese |
 | `ui.css`, `icon.svg`, `icon-white.svg` | Styles and button icons |
 | `privacy.html`, `support.html` | Privacy policy and help page |
-| `LISTING.md`, `listing-icon.*` | Copy and icon for the Trello directory listing |
+| `LISTING.md`, `listing-icon.*`, `listing-demo.gif` | Copy, icon and demo animation for the Trello directory listing |
 | `demo-preview.html` | Offline demo with fictional data (not used by Trello) |
 
 ## Self-hosting
 
 1. Serve this folder over HTTPS (for example GitHub Pages).
 2. In https://trello.com/power-ups/admin create a Power-Up whose Iframe connector URL is `…/index.html`.
-3. Enable the capabilities: Board buttons, Card back section, Card badges, Card buttons, Card detail badges, Show settings.
+3. Enable the capabilities: Board buttons, Card back section, Card badges, Card buttons, Card detail badges, On enable, Show settings.
 4. Add it to a board from Power-Ups → Custom.
 
 Opening `section.html`, `overview.html` or `settings.html` directly in a browser runs them in demo mode with
@@ -66,6 +67,7 @@ fictional data.
 - Fee data hidden from viewers without edit access
 - CSV export from the receivables overview
 - Privacy policy and support pages
+- Welcome modal with getting-started steps when the Power-Up is enabled
 
 **1.0.0** Initial version.
 

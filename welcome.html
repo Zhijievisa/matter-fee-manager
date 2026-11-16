@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matter Fee Manager — welcome</title>
+  <link rel="stylesheet" href="./ui.css">
+</head>
+<body>
+  <div id="mfm-root" class="mfm pad"></div>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <script src="./i18n.js"></script>
+  <script src="./shared.js"></script>
+  <script src="./welcome.js"></script>
+  <script>
+    (function () {
+      var t = MFM.getT();
+      MFM.applyTheme(t);
+      MFM.mountWelcome(t, document.getElementById('mfm-root'));
+    })();
+  </script>
+</body>
+</html>
