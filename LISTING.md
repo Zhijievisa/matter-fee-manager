@@ -27,39 +27,79 @@ Bracketed items are for you to fill in. Nothing here is submitted automatically.
 
 **Overview (one line):**
 
-> Staged fee schedules for fixed-fee work: see what has been invoiced, what is overdue and what to bill next.
+> Turn any card into a staged fee schedule. See what to invoice, what is unpaid and what is overdue, on the card and across the whole board.
 
-**Description (Markdown):**
+**Images (fictional data, hosted with the Power-Up):**
 
-```markdown
-**Matter Fee Manager** turns any card into a staged fee schedule for fixed-fee work.
+| Use | URL |
+|---|---|
+| Animation: stages moving from invoiced to paid, badges updating | `https://zhijievisa.github.io/matter-fee-manager/img/demo.gif` |
+| Fee schedule on the card, with card-front badges | `https://zhijievisa.github.io/matter-fee-manager/img/fee-schedule.png` |
+| Receivables overview for the board | `https://zhijievisa.github.io/matter-fee-manager/img/receivables.png` |
+| Card-front badges only | `https://zhijievisa.github.io/matter-fee-manager/img/badges.png` |
 
-Split a job into billing stages, then move each stage through four steps:
-**Not started → Done · to invoice → Invoiced · unpaid → Paid**.
+**Description:** paste the text below into the editor, then insert each image where marked.
 
-### What you get
+```
+Matter Fee Manager is for people who agree a fixed fee with a client and bill it in stages: lawyers, migration agents, accountants, consultants, designers, agencies. If each job is already a Trello card, this Power-Up puts the fee schedule on that card and tells you when it is time to send an invoice or chase a payment.
 
-- **A fee schedule on the card.** Stage names, amounts, invoice numbers, due dates, part payments, and a
-  running summary of contract total, received, receivable now and not yet due.
-- **Badges on the card front.** See at a glance which cards have money to invoice, awaiting payment or overdue.
-- **A receivables overview for the whole board.** Every stage that needs invoicing or chasing, most urgent
-  first, with board totals and CSV export.
-- **Templates.** Save your usual stage breakdowns and apply them in one click.
-- **English and 简体中文**, your own currency symbol and payment terms.
+[IMAGE: demo.gif]
 
-### Your data stays in Trello
+The problem it solves
 
-Everything is stored on your own board using Trello's Power-Up storage. There is no external server, no account
-to create, no analytics and no tracking.
+With fixed-fee work the money falls due when a step is finished, not at the end of the month. It is easy to finish a step and forget to bill it, or to bill it and not notice the invoice is three weeks overdue. Trello shows you where the work is up to. It does not show you where the money is up to. Matter Fee Manager does.
 
-Fee figures are shown only to board members with edit access. Trello stores Power-Up data so that anyone who can
-view a board can technically read it, so do not use this on public boards for confidential figures.
+How it works
 
-### Good to know
+1. Open a card and add a fee schedule. List the billing stages and the amount for each one, or apply a template you have saved.
+2. As the work moves on, change each stage's status: Not started → Done · to invoice → Invoiced · unpaid → Paid.
+3. The card and the board update straight away, so you can see what to invoice next and who has not paid.
 
-- It does not send reminders; use the badges and the overview.
+What you see on the card
+
+[IMAGE: fee-schedule.png]
+
+- Every stage with its amount, status, invoice number and due date.
+- A running summary: contract total, received, receivable now, and not yet due.
+- A coloured progress bar showing how much of the fee has been collected.
+- Part payments: record what has been received on an invoice and the balance is tracked.
+- A warning if your stages do not add up to the contract total.
+- The due date is filled in from your payment terms when you mark a stage as invoiced.
+
+What you see on the board
+
+- Badges on the front of each card: yellow for work done and not yet invoiced, orange for invoiced and awaiting payment, red for overdue with the number of days, green when the fee is paid in full.
+
+[IMAGE: receivables.png]
+
+- A Receivables button that opens one list of every stage that needs an invoice or a follow-up, across all cards, most urgent first, with totals for the board.
+- CSV export of every stage for your spreadsheet or your bookkeeper.
+
+Why use it
+
+- Bill on time. Finished work shows up as "to invoice" until you bill it.
+- Chase the right clients. Overdue amounts turn red and rise to the top of the list.
+- Know your position. See at any moment how much has been received, how much is owed now and how much is still to come.
+- No new system to learn. It lives on the cards you already use, with no separate login.
+
+Set up for your practice
+
+- Templates for your usual stage breakdowns, applied in one click.
+- Your own currency symbol and payment terms.
+- English and Simplified Chinese.
+- If two people edit the same schedule at once, nothing is overwritten without asking.
+
+Your data stays in Trello
+
+Everything is stored on your own board using Trello's Power-Up storage. There is no external server, no account to create, no analytics and no tracking. Fee figures are shown only to board members with edit access. Trello stores Power-Up data so that anyone who can view a board can technically read it, so do not use this on public boards for confidential figures.
+
+Good to know
+
+- It does not send reminders. Use the badges and the Receivables overview.
 - It is a tracking tool, not an accounting, tax or trust account record.
-- Free to use. [REMOVE THIS LINE WHEN PRICING CHANGES]
+- Free to use.
+
+Help and support: https://zhijievisa.github.io/matter-fee-manager/support.html
 ```
 
 **Suggested categories:** Board utilities; Analytics & reporting. Choose from whatever the form offers.
