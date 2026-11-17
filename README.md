@@ -39,11 +39,12 @@ Trello limits Power-Up storage to 4096 characters per card, which is roughly 20 
 | `ui.css`, `icon.svg`, `icon-white.svg` | Styles and button icons |
 | `privacy.html`, `support.html` | Privacy policy and help page |
 | `LISTING.md`, `listing-icon.*`, `listing-demo.gif` | Copy, icon and demo animation for the Trello directory listing |
-| `demo-preview.html` | Offline demo with fictional data (not used by Trello) |
+| `boot.js` | Page start-up (kept separate so no page needs an inline script) |
+| `_headers` | HTTP security headers (Content-Security-Policy, HSTS and others) for hosts that support this file, such as Cloudflare Pages and Netlify |
 
 ## Self-hosting
 
-1. Serve this folder over HTTPS (for example GitHub Pages).
+1. Serve this folder over HTTPS from a host that applies the `_headers` file (for example Cloudflare Pages or Netlify). GitHub Pages works but cannot send the security headers.
 2. In https://trello.com/power-ups/admin create a Power-Up whose Iframe connector URL is `…/index.html`.
 3. Enable the capabilities: Board buttons, Card back section, Card badges, Card buttons, Card detail badges, On enable, Show settings.
 4. Add it to a board from Power-Ups → Custom.
@@ -68,6 +69,7 @@ fictional data.
 - CSV export from the receivables overview
 - Privacy policy and support pages
 - Welcome modal with getting-started steps when the Power-Up is enabled
+- Strict Content-Security-Policy: no inline scripts or styles; security headers in `_headers`
 
 **1.0.0** Initial version.
 

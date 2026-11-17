@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var MFM = window.MFM, tr = MFM.tr;
+  if (!window.TrelloPowerUp) return; // opened directly, outside Trello: nothing to do
   var BASE = window.location.href.split('#')[0].split('?')[0].replace(/[^\/]*$/, '');
   var ICON_GRAY = BASE + 'icon.svg';
   var ICON_WHITE = BASE + 'icon-white.svg';

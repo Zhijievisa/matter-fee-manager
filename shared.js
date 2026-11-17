@@ -274,6 +274,7 @@
       else if (k === 'text') el.textContent = v;
       else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
       else if (k === 'value') el.value = v;
+      else if (k === 'style') el.style.cssText = v;
       else if (v === true) el.setAttribute(k, '');
       else el.setAttribute(k, v);
     });
