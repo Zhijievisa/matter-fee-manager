@@ -7,22 +7,22 @@ Bracketed items are for you to fill in. Nothing here is submitted automatically.
 | Field | Value |
 |---|---|
 | Name | Matter Fee Manager |
-| Iframe connector URL | `https://zhijievisa.github.io/matter-fee-manager/index.html` |
+| Iframe connector URL | `https://matter-fee-manager.pages.dev/` |
 | Author | ZHIJIEVISA PTY LTD |
 | Email | info@zhijievisa.com |
-| Support contact | info@zhijievisa.com (help page: `https://zhijievisa.github.io/matter-fee-manager/support.html`) |
+| Support contact | info@zhijievisa.com (help page: `https://matter-fee-manager.pages.dev/support`) |
 | Atlassian account email | [EMAIL OF YOUR ATLASSIAN ACCOUNT] |
 
 ## Privacy and compliance
 
 | Field | Value |
 |---|---|
-| Privacy policy URL | `https://zhijievisa.github.io/matter-fee-manager/privacy.html` |
+| Privacy policy URL | `https://matter-fee-manager.pages.dev/privacy` |
 | Stores personal data outside Trello? | No. All data is stored in Trello Power-Up storage on the user's board. |
 
 ## Listing
 
-**Icon (URL field, 144 × 144 px, HTTPS):** `https://zhijievisa.github.io/matter-fee-manager/listing-icon-144.png`
+**Icon (URL field, 144 × 144 px, HTTPS):** `https://matter-fee-manager.pages.dev/listing-icon-144.png`
 (`listing-icon.png` is the same design at 512 × 512.)
 
 **Overview (one line):**
@@ -33,10 +33,10 @@ Bracketed items are for you to fill in. Nothing here is submitted automatically.
 
 | Use | URL |
 |---|---|
-| Animation: stages moving from invoiced to paid, badges updating | `https://zhijievisa.github.io/matter-fee-manager/img/demo.gif` |
-| Fee schedule on the card, with card-front badges | `https://zhijievisa.github.io/matter-fee-manager/img/fee-schedule.png` |
-| Receivables overview for the board | `https://zhijievisa.github.io/matter-fee-manager/img/receivables.png` |
-| Card-front badges only | `https://zhijievisa.github.io/matter-fee-manager/img/badges.png` |
+| Animation: stages moving from invoiced to paid, badges updating | `https://matter-fee-manager.pages.dev/img/demo.gif` |
+| Fee schedule on the card, with card-front badges | `https://matter-fee-manager.pages.dev/img/fee-schedule.png` |
+| Receivables overview for the board | `https://matter-fee-manager.pages.dev/img/receivables.png` |
+| Card-front badges only | `https://matter-fee-manager.pages.dev/img/badges.png` |
 
 **Description:** paste the text below into the editor, then insert each image where marked.
 
@@ -99,7 +99,7 @@ Good to know
 - It is a tracking tool, not an accounting, tax or trust account record.
 - Free to use.
 
-Help and support: https://zhijievisa.github.io/matter-fee-manager/support.html
+Help and support: https://matter-fee-manager.pages.dev/support
 ```
 
 **Suggested categories:** Board utilities; Analytics & reporting. Choose from whatever the form offers.
@@ -127,7 +127,7 @@ Have these ready; the form asks questions so the reviewers know how to test.
 
 | Item | Value |
 |---|---|
-| Connector URL | `https://zhijievisa.github.io/matter-fee-manager/index.html` |
+| Connector URL | `https://matter-fee-manager.pages.dev/` |
 | Power-Up ID | [POWER-UP ID — the long ID in the address bar when you edit the Power-Up in the admin portal] |
 | Preferred launch date | [DATE YOU WANT IT TO GO LIVE, or "as soon as approved"] |
 
