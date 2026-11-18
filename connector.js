@@ -12,6 +12,14 @@
     return t.get('board', 'shared', MFM.CFG_KEY).then(function (raw) { return MFM.cfg(raw); });
   }
 
+  // If Trello's storage call fails (for example a gateway timeout), tell the user instead of
+  // leaving an unhandled rejection behind.
+  function saveFailed(t) {
+    return function (err) {
+      return t.alert({ message: tr('err_save', err && err.message ? err.message : tr('err_unknown')), duration: 8, display: 'error' });
+    };
+  }
+
   function openOverview(t) {
     return t.modal({ url: './overview.html', title: tr('ov_title'), height: 640, fullscreen: false });
   }
@@ -19,7 +27,7 @@
   function createTable(t, tpl) {
     var fee = tpl ? MFM.fromTemplate(tpl) : { v: 1, rv: 0, st: [MFM.newStage('', 0)] };
     fee.rv = 1;
-    return t.set('card', 'shared', MFM.KEY, MFM.compact(fee)).then(function () { return t.closePopup(); });
+    return t.set('card', 'shared', MFM.KEY, MFM.compact(fee)).then(function () { return t.closePopup(); }, saveFailed(t));
   }
 
   function appendTemplate(t, tpl) {
@@ -31,8 +39,8 @@
       if (MFM.sizeOf(payload) > MFM.SIZE_LIMIT) {
         return t.alert({ message: tr('too_many'), duration: 6, display: 'error' });
       }
-      return t.set('card', 'shared', MFM.KEY, payload);
-    }).then(function () { return t.closePopup(); });
+      return t.set('card', 'shared', MFM.KEY, payload).then(function () { return t.closePopup(); });
+    }).catch(saveFailed(t));
   }
 
   function confirmDelete(t) {
@@ -43,7 +51,7 @@
       confirmText: tr('del_ok'),
       confirmStyle: 'danger',
       onConfirm: function (t) {
-        return t.remove('card', 'shared', MFM.KEY).then(function () { return t.closePopup(); });
+        return t.remove('card', 'shared', MFM.KEY).then(function () { return t.closePopup(); }, saveFailed(t));
       },
       cancelText: tr('cancel'),
       onCancel: function (t) { return t.closePopup(); }

@@ -69,7 +69,7 @@ fictional data.
 - CSV export from the receivables overview
 - Privacy policy and support pages
 - Welcome modal with getting-started steps when the Power-Up is enabled
-- Strict Content-Security-Policy: no inline scripts or styles; security headers in `_headers`
+- Content-Security-Policy with a strict script-src (no inline scripts, no eval); security headers in `_headers`
 
 **1.0.0** Initial version.
 
