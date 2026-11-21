@@ -24,13 +24,13 @@
   };
 
   MFM.mountOverview = function (t, root) {
-    var showCsv = false, copied = false, lastRows = [];
+    var showCsv = false, copied = false, lastRows = [], cfg = null, syncMsg = '', syncBusy = false;
 
     function load() {
       return Promise.all([
         t.cards('id', 'name', 'idList'), t.lists('id', 'name'), t.get('board', 'shared', MFM.CFG_KEY)
       ]).then(function (r) {
-        MFM.cfg(r[2]);
+        cfg = MFM.cfg(r[2]);
         if (!MFM.canSee(t)) { lastRows = []; MFM.fill(root, [h('div', { class: 'note info', text: tr('no_access') })]); return null; }
         var cards = r[0] || [], lists = {};
         (r[1] || []).forEach(function (l) { lists[l.id] = l.name; });
@@ -50,6 +50,35 @@
       return h('a', { class: 'link', text: card.name, title: tr('open_card'), onclick: function () {
         Promise.resolve(t.showCard(card.id)).then(function () { return t.closeModal(); }, function () { /* ignore */ });
       } });
+    }
+
+    // Optional status field: bring every card that has a fee schedule up to date, one card at a time
+    // (two small requests per card, well inside Trello's rate limit).
+    function syncAll(rows) {
+      var list = rows.filter(function (x) { return x.fee; }), i = 0, changed = 0, failed = 0;
+      syncBusy = true;
+      var step = function () {
+        if (i >= list.length) {
+          syncBusy = false; syncMsg = tr('fs_done', list.length, changed, failed); draw(lastRows);
+          return null;
+        }
+        syncMsg = tr('fs_progress', i, list.length); draw(lastRows);
+        return MFM.syncStatus(t, list[i].card.id, list[i].fee, cfg).then(function (r) {
+          if (r.skip === 'auth') { syncBusy = false; syncMsg = tr('fs_need_auth'); draw(lastRows); return null; }
+          if (r.changed) changed++;
+          if (r.err) failed++;
+          i++;
+          return new Promise(function (ok) { setTimeout(ok, 150); }).then(step);
+        });
+      };
+      return step();
+    }
+    function syncBar(rows) {
+      if (!cfg || !cfg.sync || !MFM.rest(t).ok || !rows.length) return null;
+      return h('div', { class: 'foot' }, [
+        h('button', { type: 'button', text: tr('fs_sync_all'), disabled: syncBusy, onclick: function () { syncAll(rows); } }),
+        syncMsg ? h('span', { class: 'muted small', text: syncMsg }) : null
+      ]);
     }
 
     function csvPanel(rows) {
@@ -167,6 +196,7 @@
         ]),
         showCsv ? csvPanel(withFee) : null,
         allTable,
+        syncBar(withFee),
         h('div', { class: 'note info', text: tr('footnote', MFM.fmtDate(today)) })
       ]);
     }

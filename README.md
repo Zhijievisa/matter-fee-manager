@@ -6,7 +6,7 @@ Split a job into billing stages and move each one through
 **Not started → Done · to invoice → Invoiced · unpaid → Paid**. Card badges and a board-level receivables
 overview show what to invoice, what is awaiting payment and what is overdue.
 
-Version 1.1.0 · English and 简体中文
+Version 1.2.0 · English and 简体中文
 
 ## Features
 
@@ -22,6 +22,9 @@ Version 1.1.0 · English and 简体中文
 
 Static front-end files only. There is no server and no database. All fee data is stored in Trello Power-Up
 storage on the user's own board (`card/shared/fee` and `board/shared/cfg`). See `privacy.html`.
+
+The optional status field (off by default) additionally writes one text custom field on the card through the
+Trello REST API, using the member's own authorization.
 
 Trello limits Power-Up storage to 4096 characters per card, which is roughly 20 stages.
 
@@ -55,10 +58,21 @@ fictional data.
 ## Known limits
 
 - No reminders or notifications. A Power-Up runs only while a board is open.
+- The status field is updated only while a card or the Receivables overview is open in the browser of a member who
+  has authorized the Power-Up. Edits by a member who has not authorized leave it unchanged until an authorized
+  member opens the card.
 - Not an accounting, tax or trust account record. Figures are typed in by hand.
 - Designed for the desktop web app; Trello's mobile apps have limited support for custom Power-Up sections.
 
 ## Changelog
+
+**1.2.0**
+- Optional status field (off by default): a one-line summary of each fee schedule can be copied into a text custom
+  field chosen in Settings, so Trello filters, automation and integrations can read it. This is the only feature
+  that uses the Trello REST API; it needs `MFM.APP_KEY` in `shared.js` (the Power-Up's public API key) and each
+  member's Trello authorization. While the key is empty the feature is hidden and nothing is requested.
+- `_headers`: `connect-src` now also allows `https://api.trello.com`.
+- Privacy policy: describes the optional status field; hosting is Cloudflare Pages.
 
 **1.1.0**
 - One build for English and 简体中文, with a language setting

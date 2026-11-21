@@ -14,7 +14,8 @@
     var cfg = MFM.cfg(null);
     var loadedRv = 0;
     var dirty = false, saving = false, canWrite = true, conflict = false, errMsg = '', armedDelete = null;
-    var summaryEl, barEl, saveEl, errEl, rowsEl;
+    var summaryEl, barEl, saveEl, errEl, rowsEl, syncEl;
+    var syncNote = null, syncing = false, syncAgain = false;
 
     try {
       var ctx = t.getContext() || {};
@@ -32,6 +33,7 @@
         if (!MFM.canSee(t)) { MFM.fill(root, [h('div', { class: 'note info', text: tr('no_access') })]); resize(); return; }
         if (!dirty && !saving) { state = MFM.normalize(r[0]); loadedRv = state.rv || 0; conflict = false; }
         draw();
+        reconcile();
       });
     }
 
@@ -63,9 +65,43 @@
         return t.set('card', 'shared', MFM.KEY, payload).then(function () {
           saving = false; dirty = false; conflict = false; loadedRv = payload.rv; state.rv = payload.rv;
           drawSave(); drawErr();
+          reconcile();
           return true;
         }, fail);
       }, fail);
+    }
+
+    /* ---------- optional status field (see shared.js) ----------
+     * Runs after every load and save: reads the card's status field and rewrites it only when it no
+     * longer matches the saved schedule. Unsaved edits are never copied.
+     */
+    function reconcile() {
+      if (MFM.demo || !canWrite || !cfg.sync || dirty) return;
+      if (syncing) { syncAgain = true; return; }
+      syncing = true;
+      MFM.syncStatus(t, (t.getContext() || {}).card, MFM.compact(state), cfg).then(function (r) {
+        syncing = false;
+        var next = r.skip === 'auth' ? 'auth' : (r.err ? (r.status === 404 || r.status === 400 ? tr('fs_gone') : r.err) : null);
+        if (next !== syncNote) { syncNote = next; drawSync(); }
+        if (syncAgain) { syncAgain = false; reconcile(); }
+      });
+    }
+    function drawSync() {
+      if (!syncEl) return;
+      var kids = [];
+      if (syncNote === 'auth') {
+        kids.push(h('div', { class: 'note info' }, [
+          h('span', { text: tr('fs_need_auth') + ' ' }),
+          // authorize() is called straight from the click so the browser allows Trello's consent window
+          h('button', { type: 'button', text: tr('fs_authorize'), onclick: function () {
+            MFM.rest(t).authorize().then(function (tok) { if (tok) reconcile(); }).catch(function () { /* consent window closed */ });
+          } })
+        ]));
+      } else if (syncNote) {
+        kids.push(h('div', { class: 'note warn', text: tr('fs_err', syncNote) }));
+      }
+      MFM.fill(syncEl, kids);
+      resize();
     }
 
     function revert() { dirty = false; conflict = false; errMsg = ''; return load(); }
@@ -291,6 +327,7 @@
       rowsEl = h('div', { class: 'stages' });
       saveEl = h('div', { class: 'savebar' });
       errEl = h('div');
+      syncEl = h('div');
 
       var contract = h('input', {
         type: 'text', class: 'amt', inputmode: 'decimal', placeholder: tr('optional'), disabled: !canWrite,
@@ -306,7 +343,7 @@
 
       MFM.fill(root, [
         MFM.demo ? h('div', { class: 'demo-banner', text: tr('demo') }) : null,
-        summaryEl, barEl, rowsEl, errEl,
+        summaryEl, barEl, rowsEl, errEl, syncEl,
         h('div', { class: 'foot' }, [
           h('button', { text: tr('add_stage'), disabled: !canWrite, onclick: function () {
             state.st.push(MFM.newStage('', 0)); dirty = true; draw();
@@ -318,7 +355,7 @@
           saveEl
         ])
       ]);
-      drawSummary(); drawRows(); drawSave(); drawErr();
+      drawSummary(); drawRows(); drawSave(); drawErr(); drawSync();
     }
 
     // auto-save when the user clicks outside the schedule, so closing the card without pressing Save keeps the edits

@@ -51,7 +51,11 @@
       confirmText: tr('del_ok'),
       confirmStyle: 'danger',
       onConfirm: function (t) {
-        return t.remove('card', 'shared', MFM.KEY).then(function () { return t.closePopup(); }, saveFailed(t));
+        var card = (t.getContext() || {}).card;
+        return t.remove('card', 'shared', MFM.KEY).then(function () {
+          // clear the optional status field too (does nothing unless it is switched on and authorized)
+          return withCfg(t).then(function (cfg) { return MFM.syncStatus(t, card, null, cfg); });
+        }).then(function () { return t.closePopup(); }, saveFailed(t));
       },
       cancelText: tr('cancel'),
       onCancel: function (t) { return t.closePopup(); }
@@ -144,5 +148,5 @@
         return t.popup({ title: tr('set_title'), url: './settings.html', height: 560 });
       });
     }
-  });
+  }, MFM.appOpts());
 })();

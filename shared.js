@@ -1,13 +1,19 @@
 /* Matter Fee Manager — shared logic (money, dates, statuses, totals, badges, demo data)
- * Where data lives (nothing is sent anywhere else):
+ * Where data lives:
  *   card   t.set('card',  'shared', 'fee', {...})   the staged fee schedule of each card
  *   board  t.set('board', 'shared', 'cfg', {...})   language, currency symbol, payment terms, templates
+ * Optional, off by default: a one-line status copied to a text custom field on the same card (Trello REST API).
  * Trello limit: 4096 characters of serialized data per scope/visibility pair.
  */
 (function (root) {
   'use strict';
 
-  var MFM = { VERSION: '1.1.0', KEY: 'fee', CFG_KEY: 'cfg', SIZE_LIMIT: 3900 };
+  var MFM = { VERSION: '1.2.0', KEY: 'fee', CFG_KEY: 'cfg', SIZE_LIMIT: 3900 };
+  // Public client-side key of this Power-Up (not the secret). While it is empty, the optional
+  // "status field" feature stays hidden and the Power-Up never asks for Trello authorization.
+  MFM.APP_KEY = '';
+  MFM.APP_NAME = 'Matter Fee Manager';
+  MFM.appOpts = function () { return MFM.APP_KEY ? { appKey: MFM.APP_KEY, appName: MFM.APP_NAME } : undefined; };
   var STR = root.MFM_STR || (typeof require === 'function' ? require('./i18n.js') : { en: {}, zh: {} });
 
   /* ---------- language and currency ---------- */
@@ -145,6 +151,10 @@
       terms: isFinite(terms) && terms >= 0 ? terms : 7,
       tpls: []
     };
+    // optional status field: custom field id, its name, and the language the line is written in
+    if (raw.sync && typeof raw.sync === 'object' && /^[0-9a-f]{24}$/.test(String(raw.sync.fid || ''))) {
+      out.sync = { fid: String(raw.sync.fid), fn: String(raw.sync.fn || '').slice(0, 60), l: raw.sync.l === 'zh' ? 'zh' : 'en' };
+    }
     MFM.useCfg(out);
     (Array.isArray(raw.tpls) ? raw.tpls : MFM.defaultCfg().tpls).forEach(function (t) {
       if (!t || !t.n) return;
@@ -251,6 +261,136 @@
 
   MFM.sizeOf = function (obj) { return JSON.stringify(obj).length; };
 
+  /* ---------- optional status field ----------
+   * A one-line summary of the fee schedule, copied into a text custom field chosen in Settings so that
+   * Trello filters, automation and integrations can read it. Power-Up storage calls cannot write custom
+   * fields, so this is the only part that uses the Trello REST API and the member's authorization.
+   *   Unpaid: Stage 2 Draft $1,200.00 (done 2026-11-10) | Received $1,000.00 / Contract $4,000.00 | Updated 2026-11-21
+   */
+  MFM.LINE_MAX = 480;
+  function inLang(lang, fn) {
+    var prev = MFM.lang;
+    MFM.lang = lang === 'zh' ? 'zh' : 'en';
+    try { return fn(); } finally { MFM.lang = prev; }
+  }
+  function oneLine(s) { return String(s || '').replace(/[｜|\r\n]+/g, '/').replace(/\s+/g, ' ').trim(); }
+  // The line without its trailing "Updated" date; '' when there is nothing worth showing.
+  MFM.statusCore = function (fee, lang, today) {
+    var f = MFM.normalize(fee), r = MFM.summarize(f, today);
+    if (!r.n || r.sum === 0) return '';
+    return inLang(lang, function () {
+      var unpaid = [], toInv = [];
+      f.st.forEach(function (s, idx) {
+        var amt = s.s === 2 ? MFM.owing(s) : s.a;
+        if (!((s.s === 1 || s.s === 2) && amt > 0)) return;
+        var name = oneLine(s.n);
+        var text = MFM.tr(s.dd ? 'fl_item' : 'fl_item_nd', idx + 1, name ? ' ' + name : '', MFM.fmtMoney(amt), s.dd || '');
+        (s.s === 2 ? unpaid : toInv).push(text);
+      });
+      var sep = MFM.tr('fl_sep'), join = MFM.tr('fl_join');
+      var tail = MFM.tr('fl_totals', MFM.fmtMoney(r.paid), MFM.fmtMoney(r.total));
+      var settled = !unpaid.length && !toInv.length && r.outstanding === 0 && r.paid >= r.total;
+      var build = function (u, v) {
+        var parts = [];
+        if (u.length) parts.push(MFM.tr('fl_unpaid', u.join(join)));
+        if (v.length) parts.push(MFM.tr('fl_toinv', v.join(join)));
+        if (!parts.length) parts.push(MFM.tr(settled ? 'fl_settled' : 'fl_none'));
+        parts.push(tail);
+        return parts.join(sep);
+      };
+      var out = build(unpaid, toInv), cut = 0;
+      // keep within the field's size: drop items from the end and say how many were left out
+      while (out.length > MFM.LINE_MAX && unpaid.length + toInv.length > 1) {
+        (toInv.length > 1 || unpaid.length <= 1 ? toInv : unpaid).pop();
+        cut++;
+        var u = unpaid.slice(), v = toInv.slice();
+        (v.length ? v : u).push(MFM.tr('fl_more', cut));
+        out = build(u, v);
+      }
+      return out.length > MFM.LINE_MAX ? out.slice(0, MFM.LINE_MAX - 1) + '…' : out;
+    });
+  };
+  MFM.statusLine = function (core, lang, today) {
+    if (!core) return '';
+    return inLang(lang, function () { return core + MFM.tr('fl_sep') + MFM.tr('fl_upd', today || MFM.today()); });
+  };
+  // Strips the trailing "Updated yyyy-mm-dd" part (either language) so two lines can be compared.
+  MFM.lineCore = function (line) {
+    return String(line || '').replace(/\s*[｜|]\s*(?:更新|Updated) \d{4}-\d{2}-\d{2}\s*$/, '').trim();
+  };
+
+  // The member's Trello authorization. Trello keeps the token in the member's private Power-Up data;
+  // a copy stays in memory for this window because browsers may block the stored one.
+  MFM._token = null;
+  MFM.rest = function (t) {
+    var api = null;
+    try { api = MFM.APP_KEY && !MFM.demo && typeof t.getRestApi === 'function' ? t.getRestApi() : null; } catch (e) { api = null; }
+    return {
+      ok: !!api,
+      token: function () {
+        if (MFM._token) return Promise.resolve(MFM._token);
+        if (!api) return Promise.resolve(null);
+        return Promise.resolve().then(function () { return api.getToken(); })
+          .then(function (tok) { MFM._token = tok || null; return MFM._token; })
+          .catch(function () { return null; });
+      },
+      // Must be called directly from a click handler, or the browser blocks Trello's consent window.
+      authorize: function () {
+        return api.authorize({ scope: 'read,write', expiration: 'never' }).then(function (tok) { MFM._token = tok || null; return MFM._token; });
+      },
+      clear: function () {
+        MFM._token = null;
+        return api ? Promise.resolve().then(function () { return api.clearToken(); }).catch(function () {}) : Promise.resolve();
+      }
+    };
+  };
+  MFM._call = function (token, method, path, body) {
+    var url = 'https://api.trello.com/1' + path + '?key=' + encodeURIComponent(MFM.APP_KEY) + '&token=' + encodeURIComponent(token);
+    var opts = { method: method };
+    if (body !== undefined) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
+    return root.fetch(url, opts);
+  };
+  // Text custom fields of the current board: [{id, name}]
+  MFM.textFields = function (t, token) {
+    var board = (t.getContext() || {}).board;
+    return MFM._call(token, 'GET', '/boards/' + encodeURIComponent(board) + '/customFields').then(function (res) {
+      if (!res.ok) { var e = new Error('HTTP ' + res.status); e.status = res.status; throw e; }
+      return res.json();
+    }).then(function (list) {
+      return (list || []).filter(function (f) { return f && f.type === 'text'; }).map(function (f) { return { id: f.id, name: f.name }; });
+    });
+  };
+  // Makes the card's status field match its fee schedule. Reads the field first and writes only when the
+  // content differs. Never rejects: resolves {ok, changed} | {skip: 'off'|'nokey'|'auth'} | {err, status}.
+  MFM.syncStatus = function (t, cardId, fee, cfg) {
+    var s = cfg && cfg.sync;
+    if (!s || !s.fid || !cardId) return Promise.resolve({ skip: 'off' });
+    var rest = MFM.rest(t);
+    if (!rest.ok) return Promise.resolve({ skip: 'nokey' });
+    var card = encodeURIComponent(cardId);
+    var denied = function () { return rest.clear().then(function () { return { skip: 'auth' }; }); };
+    return rest.token().then(function (token) {
+      if (!token) return { skip: 'auth' };
+      var want = fee ? MFM.statusCore(fee, s.l) : '';
+      return MFM._call(token, 'GET', '/cards/' + card + '/customFieldItems').then(function (res) {
+        if (res.status === 401) return denied();
+        if (!res.ok) return { err: 'HTTP ' + res.status, status: res.status };
+        return res.json().then(function (items) {
+          var cur = '';
+          (items || []).forEach(function (it) {
+            if (it && it.idCustomField === s.fid && it.value && typeof it.value.text === 'string') cur = it.value.text;
+          });
+          if (MFM.lineCore(cur) === want) return { ok: true, changed: false };
+          var body = { value: want ? { text: MFM.statusLine(want, s.l) } : '' };
+          return MFM._call(token, 'PUT', '/cards/' + card + '/customField/' + encodeURIComponent(s.fid) + '/item', body).then(function (res2) {
+            if (res2.status === 401) return denied();
+            return res2.ok ? { ok: true, changed: true } : { err: 'HTTP ' + res2.status, status: res2.status };
+          });
+        });
+      });
+    }).catch(function (e) { return { err: (e && e.message) || 'network' }; });
+  };
+
   /* ---------- who may see fee data ----------
    * Fee figures are shown only to signed-in members who can edit the board. This is a display rule,
    * not a security boundary: Trello "shared" plugin data is readable by anyone who can read the board.
@@ -302,7 +442,7 @@
     return !!(root.TrelloPowerUp && root.location && root.location.hash && root.location.hash.length > 1);
   };
   MFM.getT = function () {
-    if (MFM.inTrello()) return root.TrelloPowerUp.iframe();
+    if (MFM.inTrello()) return root.TrelloPowerUp.iframe(MFM.appOpts());
     MFM.demo = true;
     return MFM.mockT();
   };

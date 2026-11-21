@@ -179,6 +179,35 @@
   add('privacy', 'Privacy', '隐私政策');
   add('support', 'Help & support', '帮助与支持');
 
+  // optional status field (one-line summary written to a text custom field)
+  add('fl_item', 'Stage {0}{1} {2} (done {3})', '阶段{0}{1} {2}（完成于 {3}）');
+  add('fl_item_nd', 'Stage {0}{1} {2}', '阶段{0}{1} {2}');
+  add('fl_unpaid', 'Unpaid: {0}', '未付：{0}');
+  add('fl_toinv', 'To invoice: {0}', '待开票：{0}');
+  add('fl_none', 'Nothing owing', '无欠款');
+  add('fl_settled', 'Settled', '已结清');
+  add('fl_totals', 'Received {0} / Contract {1}', '已收 {0} / 合同 {1}');
+  add('fl_upd', 'Updated {0}', '更新 {0}');
+  add('fl_sep', ' | ', '｜');
+  add('fl_join', '; ', '；');
+  add('fl_more', '… +{0} more', '…另有{0}项');
+  add('fs_title', 'Status field (optional)', '收费状态字段（可选）');
+  add('fs_help', 'Copies a one-line summary of each fee schedule into a text custom field on the card, so Trello filters, automation and integrations can read it. Create the text field with Trello\'s Custom Fields first. This needs your Trello authorization; every member who edits fee schedules authorizes once.', '把每张卡片收费表的一行摘要写进卡片上的一个文本型自定义字段，方便 Trello 筛选、自动化和其他集成读取。请先用 Trello 的「自定义字段」建好这个文本字段。此功能需要你的 Trello 授权；每位会修改收费表的成员各授权一次。');
+  add('fs_authorize', 'Authorize with Trello', '用 Trello 授权');
+  add('fs_denied', 'Authorization was not completed.', '授权没有完成。');
+  add('fs_off', 'Off', '关闭');
+  add('fs_refresh', 'Refresh list', '刷新列表');
+  add('fs_nofields', 'This board has no text custom field yet.', '这个看板还没有文本型自定义字段。');
+  add('fs_load_err', 'Could not read the board\'s custom fields ({0}).', '读取看板自定义字段失败（{0}）。');
+  add('fs_missing', '{0} (not found on this board)', '{0}（在这个看板上找不到）');
+  add('fs_revoke', 'Remove my authorization', '取消我的授权');
+  add('fs_need_auth', 'The status field is not being updated from your edits.', '你的修改还没有同步到收费状态字段。');
+  add('fs_err', 'Could not update the status field ({0}).', '更新收费状态字段失败（{0}）。');
+  add('fs_gone', 'the field no longer exists; choose it again in Settings', '字段已不存在，请到设置里重新选择');
+  add('fs_sync_all', 'Update status field on all cards', '更新所有卡片的收费状态字段');
+  add('fs_progress', 'Updating status field… {0} / {1}', '正在更新收费状态字段… {0} / {1}');
+  add('fs_done', 'Status field checked on {0} cards: {1} updated, {2} failed.', '已检查 {0} 张卡片的收费状态字段：更新 {1} 张，失败 {2} 张。');
+
   // welcome (shown once when the Power-Up is enabled on a board)
   add('wel_title', 'Welcome to Matter Fee Manager', '欢迎使用 Matter Fee Manager');
   add('wel_intro', 'Track fixed-fee work in billing stages, and see what to invoice and what is overdue.', '把固定收费的工作拆成收费阶段，随时看到该开票和已逾期的款项。');

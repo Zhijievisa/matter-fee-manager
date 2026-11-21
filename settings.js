@@ -6,8 +6,58 @@
   MFM.mountSettings = function (t, root) {
     var cfg, msg = null;
     var drafts = []; // [{name, text}]
+    var rest = MFM.rest(t), authed = false, fields = null, fsMsg = '';
 
     function resize() { try { t.sizeTo('#' + root.id); } catch (e) { /* demo mode */ } }
+
+    /* ---------- optional status field (see shared.js) ---------- */
+    function loadFields() {
+      return rest.token().then(function (token) {
+        authed = !!token;
+        if (!token) { fields = null; return null; }
+        return MFM.textFields(t, token).then(function (list) { fields = list; fsMsg = ''; }, function (e) {
+          if (e && e.status === 401) { authed = false; fields = null; return rest.clear(); }
+          fields = []; fsMsg = tr('fs_load_err', e && e.message ? e.message : tr('err_unknown'));
+          return null;
+        });
+      }).then(draw, draw);
+    }
+    function syncBlock() {
+      if (!rest.ok) return null;
+      var kids = [h('label', { text: tr('fs_title') }), h('div', { class: 'muted small', text: tr('fs_help') })];
+      if (!authed) {
+        if (cfg.sync) kids.push(h('div', { class: 'small', text: cfg.sync.fn }));
+        // authorize() is called straight from the click so the browser allows Trello's consent window
+        kids.push(h('div', { class: 'foot' }, [h('button', { type: 'button', text: tr('fs_authorize'), onclick: function () {
+          rest.authorize().then(function (tok) {
+            if (!tok) { fsMsg = tr('fs_denied'); draw(); return null; }
+            fsMsg = '';
+            return loadFields();
+          }).catch(function () { fsMsg = tr('fs_denied'); draw(); });
+        } })]));
+      } else {
+        var list = fields || [];
+        var opts = [['', tr('fs_off')]].concat(list.map(function (f) { return [f.id, f.name]; }));
+        if (cfg.sync && !list.some(function (f) { return f.id === cfg.sync.fid; })) opts.push([cfg.sync.fid, tr('fs_missing', cfg.sync.fn)]);
+        var sel = h('select', { style: 'max-width:280px', onchange: function () {
+          var f = list.filter(function (x) { return x.id === sel.value; })[0];
+          if (!sel.value) delete cfg.sync;
+          else cfg.sync = { fid: sel.value, fn: f ? f.name : (cfg.sync ? cfg.sync.fn : '') };
+        } }, opts.map(function (o) {
+          var el = h('option', { value: o[0], text: o[1] });
+          if ((cfg.sync ? cfg.sync.fid : '') === o[0]) el.selected = true;
+          return el;
+        }));
+        kids.push(h('div', { class: 'foot' }, [
+          sel,
+          h('button', { type: 'button', text: tr('fs_refresh'), onclick: loadFields }),
+          h('button', { type: 'button', text: tr('fs_revoke'), onclick: function () { rest.clear().then(loadFields); } })
+        ]));
+        if (fields && !fields.length && !fsMsg) kids.push(h('div', { class: 'note info', text: tr('fs_nofields') }));
+      }
+      if (fsMsg) kids.push(h('div', { class: 'note err', text: fsMsg }));
+      return h('div', { class: 'field' }, kids);
+    }
 
     function draw() {
       MFM.useCfg(cfg);
@@ -43,6 +93,7 @@
         h('div', { class: 'field' }, [h('label', { text: tr('s_tpls') })].concat(tplEls).concat([
           h('button', { text: tr('new_tpl'), onclick: function () { drafts.push({ name: '', text: '' }); draw(); } })
         ])),
+        syncBlock(),
         msg ? h('div', { class: 'note ' + msg.kind, text: msg.text }) : null,
         h('div', { class: 'foot' }, [
           h('span', { class: 'muted small' }, [
@@ -59,6 +110,8 @@
 
     function save() {
       var out = { lang: cfg.lang, cur: cfg.cur, terms: cfg.terms, tpls: [] }, problems = [];
+      // the status line is always written in the language the board shows at the moment it is switched on
+      if (cfg.sync) out.sync = { fid: cfg.sync.fid, fn: cfg.sync.fn, l: MFM.lang };
       drafts.forEach(function (d, i) {
         var name = d.name.trim();
         var parsed = MFM.parseTemplateLines(d.text);
@@ -81,6 +134,8 @@
       cfg = MFM.cfg(raw);
       drafts = cfg.tpls.map(function (tpl) { return { name: tpl.n, text: MFM.templateToText(tpl) }; });
       draw();
+      if (rest.ok) return loadFields();
+      return null;
     });
   };
 })();
